@@ -8,7 +8,7 @@ from data.teachers import Teacher
 from data.users import User
 from forms.admin import RegisterFormAdmin
 from forms.user import RegisterForm, LoginForm
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, login_user, logout_user, login_required
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -16,6 +16,8 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 db_sess = db_session.global_init('db/Dbase.db')
+us = 'None'
+nameUs = ""
 
 
 def main():
@@ -24,12 +26,12 @@ def main():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", us=us, nameUs=nameUs)
 
 
 @app.route("/admin")
 def admin():
-    return render_template("admin.html")
+    return render_template("admin.html", us=us, nameUs=nameUs)
 
 
 @app.route("/developer")
@@ -39,12 +41,12 @@ def developer():
     for i in db_sess.query(Admin).all():
         a.append([i.id, i.surname, i.name, i.school])
 
-    return render_template("developer.html", news=a)
+    return render_template("developer.html", news=a, us=us, nameUs=nameUs)
 
 
 @app.route("/teacher")
 def teacher():
-    return render_template("teacher.html")
+    return render_template("teacher.html", us=us, nameUs=nameUs)
 
 
 @login_manager.user_loader
@@ -55,6 +57,7 @@ def load_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    global us, nameUs
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -62,36 +65,45 @@ def login():
         if user:
             if user.check_password(form.password.data):
                 login_user(user, remember=form.remember_me.data)
+                us = 'user'
+                nameUs = user.name
                 return redirect("/")
         else:
             teacher = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
             if teacher:
                 if teacher.check_password(form.password.data):
                     login_user(teacher, remember=form.remember_me.data)
+                    us = 'teacher'
+                    nameUs = teacher.name
                     return redirect("/teacher")
             else:
                 admin = db_sess.query(Admin).filter(Admin.login == form.login.data).first()
                 if admin:
                     if admin.check_password(form.password.data):
                         login_user(admin, remember=form.remember_me.data)
+                        us = 'admin'
+                        nameUs = admin.name
                         return redirect("/admin")
                 else:
                     developer = db_sess.query(Developer).filter(Developer.login == form.login.data).first()
                     if developer:
                         if developer.check_password(form.password.data):
                             login_user(developer, remember=form.remember_me.data)
+                            us = 'developer'
+                            nameUs = developer.login
                             return redirect("/developer")
-
+            us = "None"
             return render_template('login.html',
                                    message="Неправильный логин или пароль",
-                                   form=form)
-    return render_template('login.html', title='Авторизация', form=form)
+                                   form=form, us=us, nameUs=nameUs)
+    return render_template('login.html', title='Авторизация', form=form, us=us, nameUs=nameUs)
 
 
 @app.route('/logout')
-@login_required
 def logout():
-    logout_user()
+    global us, nameUs
+    us = "None"
+    nameUs = ""
     return redirect("/")
 
 
@@ -106,7 +118,7 @@ def reqister():
                 or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
             return render_template('register.html', title='Новый ученик',
                                    form=form,
-                                   message="Такой логин уже есть")
+                                   message="Такой логин уже есть", us=us, nameUs=nameUs)
         user = User(
             name=form.name.data,
             surname=form.surname.data,
@@ -117,7 +129,7 @@ def reqister():
         db_sess.add(user)
         db_sess.commit()
         return redirect('/login')
-    return render_template('register.html', title='Новый ученик', form=form)
+    return render_template('register.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
 
 
 @app.route('/newAdmin', methods=['GET', 'POST'])
@@ -131,7 +143,7 @@ def new_admin():
                 or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
             return render_template('registerAdmin.html', title='Новый админ',
                                    form=form,
-                                   message="Такой логин уже есть")
+                                   message="Такой логин уже есть", us=us, nameUs=nameUs)
         admin = Admin(
             surname=form.surname.data,
             name=form.name.data,
@@ -143,7 +155,7 @@ def new_admin():
         db_sess.add(admin)
         db_sess.commit()
         return redirect('/developer')
-    return render_template('registerAdmin.html', title='Новый админ', form=form)
+    return render_template('registerAdmin.html', title='Новый админ', form=form, us=us, nameUs=nameUs)
 
 
 @app.route('/newAdmin/<int:id>', methods=['GET', 'POST'])
@@ -177,8 +189,7 @@ def edit_admin(id):
             abort(404)
     return render_template('registerAdmin.html',
                            title='Редактирование админа',
-                           form=form
-                           )
+                           form=form, us=us, nameUs=nameUs)
 
 
 @app.route('/admin_delete/<int:id>', methods=['GET', 'POST'])

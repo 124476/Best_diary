@@ -1,37 +1,49 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Главное меню</title>
 </head>
 <body>
 {% extends "base.html" %}
 
 {% block content %}
-{% if current_user.is_authenticated%}
+{% if us == "admin" %}
     <a href="newAdmin" class="btn btn-secondary">Добавить ученика</a>
 {% endif %}
 {% for item in news%}
+<p>
+
+
+</p>
 <div class="col-md6 border rounded">
-    <h2>Action # {{item[0]}}</h2>
+    <p>
+
+    </p>
+    <h2>{{item[3]}}</h2>
     <div>
-        {{item[2]}} - Category: {{item[7]}}
+        Директор: {{item[1]}} {{item[2]}}
     </div>
     <div>
-        {{item[1]}} - {{item[3]}} - {{item[4]}} - {{item[5]}}
+        <p>
+
+        </p>
+        <a href="/newAdmin/{{ item[0] }}" class="btn btn-warning">
+            Изменить
+        </a>
+        <a href="/admin_delete/{{ item[0] }}" class="btn btn-danger">
+            Удалить
+        </a>
+        <p>
+
+        </p>
     </div>
-    {% if current_user.is_authenticated and current_user == item[6] %}
-        <div>
-            <a href="/news/{{ item[0] }}" class="btn btn-warning">
-                Изменить
-            </a>
-            <a href="/news_delete/{{ item[0] }}" class="btn btn-danger">
-                Удалить
-            </a>
-        </div>
-    {% endif %}
 </div>
 {% endfor %}
 {% endblock %}
+</body>
+</html></title>
+</head>
+<body>
+
 </body>
 </html>

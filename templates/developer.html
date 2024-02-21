@@ -1,34 +1,44 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Главное меню</title>
 </head>
 <body>
 {% extends "base.html" %}
 
 {% block content %}
+{% if us == "developer" %}
 <a href="newAdmin" class="btn btn-secondary">Добавить директора</a>
 {% for item in news%}
+<p>
+
+
+</p>
 <div class="col-md6 border rounded">
+    <p>
+
+    </p>
     <h2>{{item[3]}}</h2>
     <div>
         Директор: {{item[1]}} {{item[2]}}
     </div>
     <div>
+        <p>
+
+        </p>
         <a href="/newAdmin/{{ item[0] }}" class="btn btn-warning">
             Изменить
         </a>
         <a href="/admin_delete/{{ item[0] }}" class="btn btn-danger">
             Удалить
         </a>
+        <p>
+
+        </p>
     </div>
 </div>
 {% endfor %}
+{% endif %}
 {% endblock %}
 </body>
 </html></title>
