@@ -8,7 +8,7 @@
 
 {% block content %}
 {% if us == "admin" %}
-    <a href="newAdmin" class="btn btn-secondary">Добавить ученика</a>
+    <a href="newClass" class="btn btn-secondary">Добавить класс</a>
 {% endif %}
 {% for item in news%}
 <p>
@@ -19,18 +19,49 @@
     <p>
 
     </p>
-    <h2>{{item[3]}}</h2>
-    <div>
-        Директор: {{item[1]}} {{item[2]}}
-    </div>
+    <h2>{{item[1]}}</h2>
     <div>
         <p>
 
         </p>
-        <a href="/newAdmin/{{ item[0] }}" class="btn btn-warning">
+        <a href="/newClass/{{ item[0] }}" class="btn btn-warning">
             Изменить
         </a>
-        <a href="/admin_delete/{{ item[0] }}" class="btn btn-danger">
+        <a href="/class_delete/{{ item[0] }}" class="btn btn-danger">
+            Удалить
+        </a>
+        <p>
+
+        </p>
+    </div>
+</div>
+{% endfor %}
+
+<p>
+
+
+</p>
+{% if us == "admin" %}
+    <a href="newTeacher" class="btn btn-secondary">Добавить учителя</a>
+{% endif %}
+{% for item in newss%}
+<p>
+
+
+</p>
+<div class="col-md6 border rounded">
+    <p>
+
+    </p>
+    <h2>{{item[1]}}</h2>
+    <div>
+        <p>
+
+        </p>
+        <a href="/newTeacher/{{ item[0] }}" class="btn btn-warning">
+            Изменить
+        </a>
+        <a href="/teacher_delete/{{ item[0] }}" class="btn btn-danger">
             Удалить
         </a>
         <p>

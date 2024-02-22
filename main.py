@@ -6,7 +6,11 @@ from data.admins import Admin
 from data.developers import Developer
 from data.teachers import Teacher
 from data.users import User
+from data.classes import Classs
+from data.predmet import Predmet
 from forms.admin import RegisterFormAdmin
+from forms.classs import RegisterFormClass
+from forms.teacher import RegisterFormTeacher
 from forms.user import RegisterForm, LoginForm
 from flask_login import LoginManager, login_user, logout_user, login_required
 
@@ -18,6 +22,7 @@ login_manager.init_app(app)
 db_sess = db_session.global_init('db/Dbase.db')
 us = 'None'
 nameUs = ""
+userUs = None
 
 
 def main():
@@ -31,7 +36,18 @@ def index():
 
 @app.route("/admin")
 def admin():
-    return render_template("admin.html", us=us, nameUs=nameUs)
+    try:
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(Classs).filter(Classs.adminId == userUs.id):
+            a.append([i.id, i.name])
+        db_sess = db_session.create_session()
+        b = []
+        for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
+            b.append([i.id, i.name])
+        return render_template("admin.html", us=us, nameUs=nameUs, news=a, newss=b)
+    except Exception:
+        return redirect("/")
 
 
 @app.route("/developer")
@@ -57,7 +73,7 @@ def load_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    global us, nameUs
+    global us, nameUs, userUs
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -67,6 +83,7 @@ def login():
                 login_user(user, remember=form.remember_me.data)
                 us = 'user'
                 nameUs = user.name
+                userUs = user
                 return redirect("/")
         else:
             teacher = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
@@ -75,6 +92,7 @@ def login():
                     login_user(teacher, remember=form.remember_me.data)
                     us = 'teacher'
                     nameUs = teacher.name
+                    userUs = teacher
                     return redirect("/teacher")
             else:
                 admin = db_sess.query(Admin).filter(Admin.login == form.login.data).first()
@@ -83,6 +101,7 @@ def login():
                         login_user(admin, remember=form.remember_me.data)
                         us = 'admin'
                         nameUs = admin.name
+                        userUs = admin
                         return redirect("/admin")
                 else:
                     developer = db_sess.query(Developer).filter(Developer.login == form.login.data).first()
@@ -91,8 +110,10 @@ def login():
                             login_user(developer, remember=form.remember_me.data)
                             us = 'developer'
                             nameUs = developer.login
+                            userUs = developer
                             return redirect("/developer")
             us = "None"
+            userUs = None
             return render_template('login.html',
                                    message="Неправильный логин или пароль",
                                    form=form, us=us, nameUs=nameUs)
@@ -101,9 +122,10 @@ def login():
 
 @app.route('/logout')
 def logout():
-    global us, nameUs
+    global us, nameUs, userUs
     us = "None"
     nameUs = ""
+    userUs = None
     return redirect("/")
 
 
@@ -156,6 +178,53 @@ def new_admin():
         db_sess.commit()
         return redirect('/developer')
     return render_template('registerAdmin.html', title='Новый админ', form=form, us=us, nameUs=nameUs)
+
+
+@app.route('/newTeacher', methods=['GET', 'POST'])
+def new_teacher():
+    try:
+        form = RegisterFormTeacher()
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            if db_sess.query(User).filter(User.login == form.login.data).first() \
+                    or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
+                    or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
+                    or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
+                return render_template('registerAdmin.html', title='Новый учитель',
+                                       form=form,
+                                       message="Такой логин уже есть", us=us, nameUs=nameUs)
+            teacher = Teacher(
+                surname=form.surname.data,
+                name=form.name.data,
+                login=form.login.data,
+                email=form.email.data,
+                adminId=userUs.id
+            )
+            teacher.set_password(form.password.data)
+            db_sess.add(teacher)
+            db_sess.commit()
+            return redirect('/admin')
+        return render_template('registerTeacher.html', title='Новый учитель', form=form, us=us, nameUs=nameUs)
+    except Exception:
+        return redirect("/")
+
+
+@app.route('/newClass', methods=['GET', 'POST'])
+def new_class():
+    try:
+        form = RegisterFormClass()
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            classs = Classs(
+                name=form.name.data,
+                adminId=userUs.id
+            )
+            db_sess.add(classs)
+            db_sess.commit()
+            return redirect('/admin')
+        return render_template('registerClass.html', title='Новый класс', form=form, us=us, nameUs=nameUs)
+    except Exception:
+        return redirect("/")
 
 
 @app.route('/newAdmin/<int:id>', methods=['GET', 'POST'])

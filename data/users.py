@@ -11,6 +11,7 @@ class User(SqlAlchemyBase, UserMixin):
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
+    classId = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     surname = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     login = sqlalchemy.Column(sqlalchemy.String, nullable=True)

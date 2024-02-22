@@ -13,6 +13,7 @@ class Evaluation(SqlAlchemyBase, UserMixin):
                            primary_key=True, autoincrement=True)
     nameType = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     userId = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
-    teacherId = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    predmetId = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     nameClass = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     nameObject = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
