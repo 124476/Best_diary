@@ -23,6 +23,7 @@ db_sess = db_session.global_init('db/Dbase.db')
 us = 'None'
 nameUs = ""
 userUs = None
+classsId = 0
 
 
 def main():
@@ -52,17 +53,23 @@ def admin():
 
 @app.route("/developer")
 def developer():
-    db_sess = db_session.create_session()
-    a = []
-    for i in db_sess.query(Admin).all():
-        a.append([i.id, i.surname, i.name, i.school])
+    if userUs:
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(Admin).all():
+            a.append([i.id, i.surname, i.name, i.school])
 
-    return render_template("developer.html", news=a, us=us, nameUs=nameUs)
+        return render_template("developer.html", news=a, us=us, nameUs=nameUs)
+    else:
+        return redirect("/")
 
 
 @app.route("/teacher")
 def teacher():
-    return render_template("teacher.html", us=us, nameUs=nameUs)
+    if userUs:
+        return render_template("teacher.html", us=us, nameUs=nameUs)
+    else:
+        return redirect("/")
 
 
 @login_manager.user_loader
@@ -145,12 +152,13 @@ def reqister():
             name=form.name.data,
             surname=form.surname.data,
             login=form.login.data,
-            email=form.email.data
+            email=form.email.data,
+            classId=classsId
         )
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
-        return redirect('/login')
+        return redirect(f'/newClass/{user.classId}')
     return render_template('register.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
 
 
@@ -227,43 +235,119 @@ def new_class():
         return redirect("/")
 
 
-@app.route('/newAdmin/<int:id>', methods=['GET', 'POST'])
-@login_required
-def edit_admin(id):
-    form = RegisterFormAdmin()
+@app.route('/newTeacher/<int:id>', methods=['GET', 'POST'])
+def edit_teacher(id):
+    form = RegisterFormTeacher()
     if request.method == "GET":
         db_sess = db_session.create_session()
-        admin = db_sess.query(Admin).filter(Admin.id == id).first()
-        if admin:
-            form.surname.data = admin.surname
-            form.name.data = admin.name
-            form.login.data = admin.login
-            form.school.data = admin.school
-            form.email.data = admin.email
+        teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+        if teacher:
+            form.surname.data = teacher.surname
+            form.name.data = teacher.name
+            form.login.data = teacher.login
+            form.email.data = teacher.email
         else:
             abort(404)
     if form.validate_on_submit():
         db_sess = db_session.create_session()
-        admin = db_sess.query(Admin).filter(Admin.id == id).first()
-        if admin:
-            admin.surname = form.surname.data
-            admin.name = form.name.data
-            admin.login = form.login.data
-            admin.school = form.school.data
-            admin.email = form.email.data
-            admin.set_password(form.password.data)
+        teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+        if teacher:
+            teacher.surname = form.surname.data
+            teacher.name = form.name.data
+            teacher.login = form.login.data
+            teacher.email = form.email.data
+            teacher.set_password(form.password.data)
             db_sess.commit()
-            return redirect('/developer')
+            return redirect('/admin')
         else:
             abort(404)
-    return render_template('registerAdmin.html',
-                           title='Редактирование админа',
+    return render_template('registerTeacher.html',
+                           title='Редактирование учителя',
                            form=form, us=us, nameUs=nameUs)
 
 
+@app.route('/newUser/<int:id>', methods=['GET', 'POST'])
+def edit_user(id):
+    form = RegisterForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == id).first()
+        if user:
+            form.surname.data = user.surname
+            form.name.data = user.name
+            form.login.data = user.login
+            form.email.data = user.email
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == id).first()
+        if user:
+            user.surname = form.surname.data
+            user.name = form.name.data
+            user.login = form.login.data
+            user.email = form.email.data
+            user.set_password(form.password.data)
+            db_sess.commit()
+            return redirect(f'/newClass/{user.classId}')
+        else:
+            abort(404)
+    return render_template('register.html',
+                           title='Редактирование ученика',
+                           form=form, us=us, nameUs=nameUs)
+
+
+@app.route('/newClass/<int:id>', methods=['GET', 'POST'])
+def edit_class(id):
+    global classsId
+    db_sess = db_session.create_session()
+    a = []
+    for i in db_sess.query(User).filter(User.classId == id):
+        a.append([i.id, i.surname, i.name])
+    classsId = id
+    return render_template('classs.html',
+                           title='Редактирование класса',
+                           news=a, us=us, nameUs=nameUs)
+
+
+@app.route('/class_delete/<int:id>', methods=['GET', 'POST'])
+def class_delete(id):
+    db_sess = db_session.create_session()
+    classs = db_sess.query(Classs).filter(Classs.id == id).first()
+    if admin:
+        db_sess.delete(classs)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/admin')
+
+
+@app.route('/teacher_delete/<int:id>', methods=['GET', 'POST'])
+def teacher_delete(id):
+    db_sess = db_session.create_session()
+    teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+    if admin:
+        db_sess.delete(teacher)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/admin')
+
+
+@app.route('/user_delete/<int:id>', methods=['GET', 'POST'])
+def user_delete(id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == id).first()
+    if user:
+        db_sess.delete(user)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect(f'/newClass/{user.classId}')
+
+
 @app.route('/admin_delete/<int:id>', methods=['GET', 'POST'])
-@login_required
-def news_delete(id):
+def admin_delete(id):
     db_sess = db_session.create_session()
     admin = db_sess.query(Admin).filter(Admin.id == id).first()
     if admin:
