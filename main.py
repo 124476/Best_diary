@@ -45,7 +45,7 @@ def admin():
         db_sess = db_session.create_session()
         b = []
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
-            b.append([i.id, i.name])
+            b.append([i.id, i.name, i.surname])
         return render_template("admin.html", us=us, nameUs=nameUs, news=a, newss=b)
     except Exception:
         return redirect("/")
@@ -198,7 +198,7 @@ def new_teacher():
                     or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
                     or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
                     or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
-                return render_template('registerAdmin.html', title='Новый учитель',
+                return render_template('registerTeacher.html', title='Новый учитель',
                                        form=form,
                                        message="Такой логин уже есть", us=us, nameUs=nameUs)
             teacher = Teacher(
@@ -294,6 +294,39 @@ def edit_user(id):
             abort(404)
     return render_template('register.html',
                            title='Редактирование ученика',
+                           form=form, us=us, nameUs=nameUs)
+
+
+@app.route('/newAdmin/<int:id>', methods=['GET', 'POST'])
+def edit_admin(id):
+    form = RegisterFormAdmin()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        admin = db_sess.query(Admin).filter(Admin.id == id).first()
+        if admin:
+            form.surname.data = admin.surname
+            form.name.data = admin.name
+            form.login.data = admin.login
+            form.school.data = admin.school
+            form.email.data = admin.email
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        admin = db_sess.query(Admin).filter(Admin.id == id).first()
+        if admin:
+            admin.surname = form.surname.data
+            admin.name = form.name.data
+            admin.login = form.login.data
+            admin.email = form.email.data
+            admin.school = form.school.data
+            admin.set_password(form.password.data)
+            db_sess.commit()
+            return redirect(f'/developer')
+        else:
+            abort(404)
+    return render_template('registerAdmin.html',
+                           title='Редактирование директора',
                            form=form, us=us, nameUs=nameUs)
 
 
