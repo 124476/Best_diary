@@ -8,7 +8,7 @@
 
 {% block content %}
 {% if us == "developer" %}
-<a href="newAdmin" class="btn btn-secondary">Добавить директора</a>
+<a href="/newTeacher" class="btn btn-secondary">Добавить учителя</a>
 {% for item in news%}
 <p>
 
@@ -18,18 +18,15 @@
     <p>
 
     </p>
-    <h2>{{item[3]}}</h2>
-    <div>
-        Директор: {{item[1]}} {{item[2]}}
-    </div>
+    <h2>{{item[1]}} {{item[2]}}</h2>
     <div>
         <p>
 
         </p>
-        <a href="newAdmin/{{ item[0] }}" class="btn btn-warning">
+        <a href="/newTeacher/{{ item[0] }}" class="btn btn-warning">
             Изменить
         </a>
-        <a href="admin_delete/{{ item[0] }}" class="btn btn-danger">
+        <a href="/teacher_delete/{{ item[0] }}" class="btn btn-danger">
             Удалить
         </a>
         <p>
@@ -38,8 +35,12 @@
     </div>
 </div>
 {% endfor %}
-<a href="allUsers" class="btn btn-secondary">Ученики</a>
-<a href="allTeachers" class="btn btn-secondary">Учителя</a>
+<p>
+
+</p>
+<a href="/developer" class="btn btn-danger">
+    Выйти
+</a>
 {% endif %}
 {% endblock %}
 </body>

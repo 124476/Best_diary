@@ -11,8 +11,11 @@ from data.predmet import Predmet
 from forms.admin import RegisterFormAdmin
 from forms.classs import RegisterFormClass
 from forms.teacher import RegisterFormTeacher
+from forms.teacherAdmin import RegisterFormTeacherAdmin
 from forms.user import RegisterForm, LoginForm
 from flask_login import LoginManager, login_user, logout_user, login_required
+
+from forms.userAdmin import RegisterFormUserAdmin
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -47,6 +50,53 @@ def admin():
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
             b.append([i.id, i.name, i.surname])
         return render_template("admin.html", us=us, nameUs=nameUs, news=a, newss=b)
+    except Exception:
+        return redirect("/")
+
+
+@app.route("/allUsers")
+def allUsers():
+    global classsId
+    db_sess = db_session.create_session()
+    a = []
+    for i in db_sess.query(User):
+        a.append([i.id, i.surname, i.name])
+    return render_template('allUsers.html',
+                           title='Ученики',
+                           news=a, us=us, nameUs=nameUs)
+
+
+@app.route("/classes/<int:id>")
+def classes(id):
+    global classsId
+    db_sess = db_session.create_session()
+    classsId = id
+    a = []
+    for i in db_sess.query(User).filter(User.classId == id):
+        a.append([i.id, i.surname, i.name])
+    return render_template("classes.html", us=us, nameUs=nameUs, news=a)
+
+
+@app.route("/allTeachers")
+def allTeachers():
+    try:
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(Teacher):
+            a.append([i.id, i.surname, i.name])
+        return render_template("allTeachers.html", us=us, nameUs=nameUs, news=a)
+    except Exception:
+        return redirect("/")
+
+
+@app.route("/allTeachersAdmin")
+def allTeachersAdmin():
+    try:
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
+            a.append([i.id, i.surname, i.name])
+        return render_template("allTeachersAdmin.html", us=us, nameUs=nameUs, news=a)
     except Exception:
         return redirect("/")
 
@@ -158,7 +208,7 @@ def reqister():
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
-        return redirect(f'/newClass/{user.classId}')
+        return redirect(f'/allUsers')
     return render_template('register.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
 
 
@@ -211,8 +261,55 @@ def new_teacher():
             teacher.set_password(form.password.data)
             db_sess.add(teacher)
             db_sess.commit()
-            return redirect('/admin')
+            return redirect('/allTeachers')
         return render_template('registerTeacher.html', title='Новый учитель', form=form, us=us, nameUs=nameUs)
+    except Exception:
+        return redirect("/")
+
+
+@app.route('/newUserAdmin', methods=['GET', 'POST'])
+def new_user_admin():
+    try:
+        form = RegisterFormUserAdmin()
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            user = db_sess.query(User).filter(User.login == form.login.data).first()
+            if not user:
+                return render_template('registerUserAdmin.html', title='Новый ученик',
+                                       form=form,
+                                       message="Такого ученика не существует!", us=us, nameUs=nameUs)
+            if user.classId != -1:
+                return render_template('registerUserAdmin.html', title='Новый ученик',
+                                       form=form,
+                                       message="Такой ученик учится в другой школе!", us=us, nameUs=nameUs)
+            user.adminId = userUs.id
+            user.classId = classsId
+            db_sess.commit()
+            return redirect(f'/classes/{classsId}')
+        return render_template('registerUserAdmin.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
+    except Exception:
+        return redirect("/")
+
+
+@app.route('/newTeacherAdmin', methods=['GET', 'POST'])
+def new_teacher_admin():
+    try:
+        form = RegisterFormTeacherAdmin()
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            teacher = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
+            if not teacher:
+                return render_template('registerTeacherAdmin.html', title='Новый учитель',
+                                       form=form,
+                                       message="Такого учителя не существует!", us=us, nameUs=nameUs)
+            if teacher.adminId != -1:
+                return render_template('registerTeacherAdmin.html', title='Новый учитель',
+                                       form=form,
+                                       message="Такой учитель работает в другой школе!", us=us, nameUs=nameUs)
+            teacher.adminId = userUs.id
+            db_sess.commit()
+            return redirect('/allTeachersAdmin')
+        return render_template('registerTeacherAdmin.html', title='Новый учитель', form=form, us=us, nameUs=nameUs)
     except Exception:
         return redirect("/")
 
@@ -258,7 +355,7 @@ def edit_teacher(id):
             teacher.email = form.email.data
             teacher.set_password(form.password.data)
             db_sess.commit()
-            return redirect('/admin')
+            return redirect('/allTeachers')
         else:
             abort(404)
     return render_template('registerTeacher.html',
@@ -289,7 +386,7 @@ def edit_user(id):
             user.email = form.email.data
             user.set_password(form.password.data)
             db_sess.commit()
-            return redirect(f'/newClass/{user.classId}')
+            return redirect(f'/developer')
         else:
             abort(404)
     return render_template('register.html',
@@ -322,7 +419,7 @@ def edit_admin(id):
             admin.school = form.school.data
             admin.set_password(form.password.data)
             db_sess.commit()
-            return redirect(f'/developer')
+            return redirect(f'/allUsers')
         else:
             abort(404)
     return render_template('registerAdmin.html',
@@ -330,24 +427,11 @@ def edit_admin(id):
                            form=form, us=us, nameUs=nameUs)
 
 
-@app.route('/newClass/<int:id>', methods=['GET', 'POST'])
-def edit_class(id):
-    global classsId
-    db_sess = db_session.create_session()
-    a = []
-    for i in db_sess.query(User).filter(User.classId == id):
-        a.append([i.id, i.surname, i.name])
-    classsId = id
-    return render_template('classs.html',
-                           title='Редактирование класса',
-                           news=a, us=us, nameUs=nameUs)
-
-
 @app.route('/class_delete/<int:id>', methods=['GET', 'POST'])
 def class_delete(id):
     db_sess = db_session.create_session()
     classs = db_sess.query(Classs).filter(Classs.id == id).first()
-    if admin:
+    if classs:
         db_sess.delete(classs)
         db_sess.commit()
     else:
@@ -364,7 +448,32 @@ def teacher_delete(id):
         db_sess.commit()
     else:
         abort(404)
-    return redirect('/admin')
+    return redirect('/allTeachers')
+
+
+@app.route('/user_deleteAdmin/<int:id>', methods=['GET', 'POST'])
+def user_deleteAdmin(id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == id).first()
+    if user:
+        user.adminId = -1
+        user.classId = -1
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect(f'/classes/{classsId}')
+
+
+@app.route('/teacher_deleteAdmin/<int:id>', methods=['GET', 'POST'])
+def teacher_deleteAdmin(id):
+    db_sess = db_session.create_session()
+    teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+    if admin:
+        teacher.adminId = -1
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/allTeachersAdmin')
 
 
 @app.route('/user_delete/<int:id>', methods=['GET', 'POST'])
@@ -376,7 +485,7 @@ def user_delete(id):
         db_sess.commit()
     else:
         abort(404)
-    return redirect(f'/newClass/{user.classId}')
+    return redirect(f'/allUsers')
 
 
 @app.route('/admin_delete/<int:id>', methods=['GET', 'POST'])

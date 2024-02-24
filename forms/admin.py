@@ -4,10 +4,10 @@ from wtforms.validators import DataRequired
 
 
 class RegisterFormAdmin(FlaskForm):
-    surname = StringField('Фамилия:', validators=[DataRequired()])
-    name = StringField('Имя:', validators=[DataRequired()])
+    surname = StringField('Фамилия директора:', validators=[DataRequired()])
+    name = StringField('Имя директора:', validators=[DataRequired()])
     school = StringField('Название школы:', validators=[DataRequired()])
     login = StringField('Логин:', validators=[DataRequired()])
     email = EmailField('Почта:', validators=[DataRequired()])
     password = PasswordField('Пароль:', validators=[DataRequired()])
-    submit = SubmitField('Добавить')
+    submit = SubmitField('Сохранить')
