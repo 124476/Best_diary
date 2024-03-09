@@ -8,10 +8,12 @@ from data.teachers import Teacher
 from data.users import User
 from data.classes import Classs
 from data.predmet import Predmet
+from data.predmetAndTeacher import PredmetAndTeacher
 from forms.admin import RegisterFormAdmin
 from forms.classs import RegisterFormClass
 from forms.teacher import RegisterFormTeacher
 from forms.teacherAdmin import RegisterFormTeacherAdmin
+from forms.teacherClass import RegisterFormTeacherClass
 from forms.user import RegisterForm, LoginForm
 from flask_login import LoginManager, login_user, logout_user, login_required
 
@@ -437,6 +439,39 @@ def class_delete(id):
     else:
         abort(404)
     return redirect('/admin')
+
+
+@app.route('/newTeacherAdmin/<int:id>', methods=['GET', 'POST'])
+def new_teacherAdmin(id):
+        form = RegisterFormTeacherClass()
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            classs = db_sess.query(Classs).filter(Classs.id == form.login.data).first()
+            teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+            if not classs:
+                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                       form=form,
+                                       message="Такого класса в школе нет!", us=us, nameUs=nameUs)
+            if classs.adminId != userUs.id:
+                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                       form=form,
+                                       message="Такого класса нет в школе!", us=us, nameUs=nameUs)
+            predmet = db_sess.query(Predmet).filter(Predmet.id == form.predmet.data).first()
+            if not predmet:
+                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                       form=form,
+                                       message="Такого предмета нет!", us=us, nameUs=nameUs)
+
+            db_sess = db_session.create_session()
+            predmetAndTeacher = PredmetAndTeacher(
+                idPredmet=predmet.id,
+                idClass=classs.id,
+                idTeacher=teacher.id
+            )
+            db_sess.add(predmetAndTeacher)
+            db_sess.commit()
+            return redirect('/allTeachersAdmin')
+        return render_template('registerTeacherClass.html', title='Подключение учителя', form=form, us=us, nameUs=nameUs)
 
 
 @app.route('/teacher_delete/<int:id>', methods=['GET', 'POST'])
