@@ -4,6 +4,7 @@ from flask import Flask, render_template, redirect, make_response, request
 from data import db_session
 from data.admins import Admin
 from data.developers import Developer
+from data.evaluations import Evaluation
 from data.teachers import Teacher
 from data.users import User
 from data.classes import Classs
@@ -11,6 +12,7 @@ from data.predmet import Predmet
 from data.predmetAndTeacher import PredmetAndTeacher
 from forms.admin import RegisterFormAdmin
 from forms.classs import RegisterFormClass
+from forms.predmet import RegisterFormEvaluation
 from forms.teacher import RegisterFormTeacher
 from forms.teacherAdmin import RegisterFormTeacherAdmin
 from forms.teacherClass import RegisterFormTeacherClass
@@ -119,9 +121,126 @@ def developer():
 @app.route("/teacher")
 def teacher():
     if userUs:
-        return render_template("teacher.html", us=us, nameUs=nameUs)
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(PredmetAndTeacher).filter(PredmetAndTeacher.idTeacher == userUs.id):
+            classs = db_sess.query(Classs).filter(Classs.id == i.idClass).first()
+            predmet = db_sess.query(Predmet).filter(Predmet.id == i.idPredmet).first()
+            a.append([classs.id, classs.name, predmet.name, predmet.id])
+        return render_template("teacher.html", news=a, nameUs=nameUs)
     else:
         return redirect("/")
+
+
+@app.route("/predmet/<int:id>/<int:pred>")
+def predmet(id, pred):
+    if userUs:
+        db_sess = db_session.create_session()
+        evalutions = db_sess.query(Evaluation).filter(
+            Evaluation.idUser == id).filter(Evaluation.idTeacher == userUs.id).filter(Evaluation.idPredmet == pred)
+
+        a = []
+        for i in evalutions:
+            a.append([i.id, i.name, i.type])
+
+        classs = db_sess.query(Classs).filter(
+            Classs.id == db_sess.query(User).filter(User.id == id).first().classId).first()
+        return render_template("predmet.html", news=a, userr=id, predmett=pred, us=us, classs=classs.id)
+    else:
+        return redirect("/")
+
+
+@app.route("/teacher_class/<int:id>/<int:pred>", methods=['GET', 'POST'])
+def teacher_class(id, pred):
+    if request.form.get("edit"):
+        return redirect(f"/predmet/{request.form.get('edit')}/{pred}")
+    if userUs:
+        headings = ["№", "Ученик", "Средний балл", '']
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(User).filter(User.classId == id):
+            evalutions = db_sess.query(Evaluation).filter(
+                Evaluation.idUser == i.id).filter(Evaluation.idTeacher == userUs.id).filter(
+                Evaluation.idPredmet == pred)
+
+            for j in evalutions:
+                if j.name not in headings:
+                    headings.insert(2, j.name)
+
+        kk = 0
+        for i in db_sess.query(User).filter(User.classId == id):
+            kk += 1
+            evalutions = db_sess.query(Evaluation).filter(
+                Evaluation.idUser == i.id).filter(Evaluation.idTeacher == userUs.id).filter(
+                Evaluation.idPredmet == pred)
+
+            b = ['' for i in range(len(headings))]
+            b[0] = str(kk)
+            b[1] = i.surname + ' ' + i.name
+            sm = 0
+            k = 0
+            if evalutions:
+                for j in evalutions:
+                    b[headings.index(j.name)] = j.type
+                    sm += j.type
+                    k += 1
+                if k != 0:
+                    b[-2] = str((sm / k * 100) // 1 / 100)
+                else:
+                    b[-2] = '-'
+            else:
+                b[-2] = '-'
+            b[-1] = i.id
+            a.append(b)
+
+        return render_template("teacher_class.html", headings=headings, data=a, us=us)
+    else:
+        return redirect("/")
+
+
+@app.route('/newEvaluation/<int:id>/<int:pred>', methods=['GET', 'POST'])
+def new_evaluation(id, pred):
+    form = RegisterFormEvaluation()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        eva = db_sess.query(Evaluation).filter(
+            Evaluation.name == form.name.data).filter(Evaluation.idUser == id).filter(
+            Evaluation.idPredmet == pred).first()
+        if eva:
+            return render_template('registerEvaluation.html', title='Новая оценка',
+                                   form=form,
+                                   message="За такое событие оценка стоит!", us=us, nameUs=nameUs)
+
+        eva = Evaluation(
+            idUser=id,
+            idPredmet=pred,
+            type=form.type.data,
+            name=form.name.data,
+            idTeacher=userUs.id
+        )
+
+        db_sess.add(eva)
+        db_sess.commit()
+
+        classs = db_sess.query(Classs).filter(
+            Classs.id == db_sess.query(User).filter(User.id == id).first().classId).first()
+        return redirect(f'/teacher_class/{classs.id}/{pred}')
+    return render_template('registerEvaluation.html', title='Новая оценка', form=form, us=us, nameUs=nameUs)
+
+
+@app.route('/predmet_delete/<int:id>/<int:userr>', methods=['GET', 'POST'])
+def predmet_delete(id, userr):
+    db_sess = db_session.create_session()
+    eva = db_sess.query(Evaluation).filter(Evaluation.id == id).first()
+    pred = eva.idPredmet
+    if predmet:
+        db_sess.delete(eva)
+        db_sess.commit()
+    else:
+        abort(404)
+    classs = db_sess.query(Classs).filter(
+        Classs.id == db_sess.query(User).filter(User.id == userr).first().classId).first()
+    return redirect(f'/teacher_class/{classs.id}/{pred}')
 
 
 @login_manager.user_loader
@@ -443,35 +562,35 @@ def class_delete(id):
 
 @app.route('/newTeacherAdmin/<int:id>', methods=['GET', 'POST'])
 def new_teacherAdmin(id):
-        form = RegisterFormTeacherClass()
-        if form.validate_on_submit():
-            db_sess = db_session.create_session()
-            classs = db_sess.query(Classs).filter(Classs.id == form.login.data).first()
-            teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
-            if not classs:
-                return render_template('registerTeacherClass.html', title='Подключение учителя',
-                                       form=form,
-                                       message="Такого класса в школе нет!", us=us, nameUs=nameUs)
-            if classs.adminId != userUs.id:
-                return render_template('registerTeacherClass.html', title='Подключение учителя',
-                                       form=form,
-                                       message="Такого класса нет в школе!", us=us, nameUs=nameUs)
-            predmet = db_sess.query(Predmet).filter(Predmet.id == form.predmet.data).first()
-            if not predmet:
-                return render_template('registerTeacherClass.html', title='Подключение учителя',
-                                       form=form,
-                                       message="Такого предмета нет!", us=us, nameUs=nameUs)
+    form = RegisterFormTeacherClass()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        classs = db_sess.query(Classs).filter(Classs.id == form.login.data).first()
+        teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+        if not classs:
+            return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                   form=form,
+                                   message="Такого класса в школе нет!", us=us, nameUs=nameUs)
+        if classs.adminId != userUs.id:
+            return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                   form=form,
+                                   message="Такого класса нет в школе!", us=us, nameUs=nameUs)
+        predmet = db_sess.query(Predmet).filter(Predmet.id == form.predmet.data).first()
+        if not predmet:
+            return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                   form=form,
+                                   message="Такого предмета нет!", us=us, nameUs=nameUs)
 
-            db_sess = db_session.create_session()
-            predmetAndTeacher = PredmetAndTeacher(
-                idPredmet=predmet.id,
-                idClass=classs.id,
-                idTeacher=teacher.id
-            )
-            db_sess.add(predmetAndTeacher)
-            db_sess.commit()
-            return redirect('/allTeachersAdmin')
-        return render_template('registerTeacherClass.html', title='Подключение учителя', form=form, us=us, nameUs=nameUs)
+        db_sess = db_session.create_session()
+        predmetAndTeacher = PredmetAndTeacher(
+            idPredmet=predmet.id,
+            idClass=classs.id,
+            idTeacher=teacher.id
+        )
+        db_sess.add(predmetAndTeacher)
+        db_sess.commit()
+        return redirect('/allTeachersAdmin')
+    return render_template('registerTeacherClass.html', title='Подключение учителя', form=form, us=us, nameUs=nameUs)
 
 
 @app.route('/teacher_delete/<int:id>', methods=['GET', 'POST'])

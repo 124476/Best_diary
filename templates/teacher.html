@@ -1,8 +1,43 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Главное меню</title>
+</head>
+<body>
+{% extends "base.html" %}
+
+{% block content %}
+{% for item in news%}
+<p>
+
+
+</p>
+<div class="col-md6 border rounded">
+    <p>
+
+    </p>
+    <h2>{{item[1]}} {{item[2]}}</h2>
+    <div>
+        <p>
+
+        </p>
+        <a href="/teacher_class/{{ item[0] }}/{{item[3]}}" class="btn btn-warning">
+            Просмотр
+        </a>
+        <p>
+
+        </p>
+    </div>
+</div>
+{% endfor %}
+
+<p>
+
+
+</p>
+{% endblock %}
+</body>
+</html></title>
 </head>
 <body>
 

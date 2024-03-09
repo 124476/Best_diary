@@ -1,14 +1,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Главное меню</title>
+    <title>Оценки</title>
 </head>
 <body>
 {% extends "base.html" %}
 
 {% block content %}
-{% if us == "admin" %}
-    <a href="newClass" class="btn btn-secondary">Добавить класс</a>
+{% if us == "teacher" %}
+    <a href="/newEvaluation/{{userr}}/{{predmett}}" class="btn btn-secondary">Добавить оценку</a>
 {% endif %}
 {% for item in news%}
 <p>
@@ -19,15 +19,12 @@
     <p>
 
     </p>
-    <h2>{{item[1]}}</h2>
+    <h2>{{item[1]}} - {{item[2]}}</h2>
     <div>
         <p>
 
         </p>
-        <a href="/classes/{{ item[0] }}" class="btn btn-warning">
-            Изменить
-        </a>
-        <a href="/class_delete/{{ item[0] }}" class="btn btn-danger">
+        <a href="/predmet_delete/{{ item[0] }}/{{userr}}" class="btn btn-danger">
             Удалить
         </a>
         <p>
@@ -39,9 +36,10 @@
 
 <p>
 
+
 </p>
-{% if us == "admin" %}
-    <a href="allTeachersAdmin" class="btn btn-secondary">Учителя</a>
+{% if us == "teacher" %}
+    <a href="/teacher_class/{{classs}}/{{predmett}}" class="btn btn-secondary">Назад</a>
 {% endif %}
 {% endblock %}
 </body>

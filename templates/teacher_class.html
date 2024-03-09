@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Оценки</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+{% extends "base.html" %}
+
+{% block content %}
+<table class="table">
+    <tr class="table__header">
+        {% for header in headings %}
+        <th class="table__cell"> {{ header }}</th>
+        {% endfor %}
+    </tr>
+    {% for row in data %}
+        <tr class="table__row">
+            {% for cell in row[:-1] %}
+                <td class="table__cell"> {{ cell }} </td>
+            {% endfor %}
+            <form action="" method="POST">
+            <input id="book_id" name="book_id"
+                   type="hidden" value="{{ row[-1] }}">
+            <td><button type="submit" name="edit" value="{{ row[-1] }}"
+                        formmethod="post">Изменить</button></td>
+            </form>
+        </tr>
+    {% endfor %}
+</table>
+{% if us == "teacher" %}
+    <a href="/teacher" class="btn btn-secondary">Назад</a>
+{% endif %}
+{% endblock %}
+</body>
+</html>
