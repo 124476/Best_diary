@@ -132,6 +132,54 @@ def teacher():
         return redirect("/")
 
 
+@app.route("/user")
+def user():
+    if userUs:
+        headings = ["Предмет", "Средний балл"]
+        db_sess = db_session.create_session()
+        a = []
+
+        mx = 0
+        for i in db_sess.query(Predmet):
+            evalutions = db_sess.query(Evaluation).filter(Evaluation.idUser == userUs.id).filter(
+                Evaluation.idPredmet == i.id)
+            p = 0
+            for j in evalutions:
+                p += 1
+            if mx < p:
+                mx = p
+
+        for i in range(mx, 0, -1):
+            headings.insert(1, str(i))
+
+        kk = 0
+        for i in db_sess.query(Predmet):
+            kk += 1
+            evalutions = db_sess.query(Evaluation).filter(Evaluation.idUser == userUs.id).filter(
+                Evaluation.idPredmet == i.id)
+
+            b = ['' for i in range(len(headings))]
+            b[0] = i.name
+            sm = 0
+            k = 0
+            if evalutions:
+                for j in evalutions:
+                    sm += j.type
+                    k += 1
+                    b[headings.index(str(k))] = j.type
+                if k != 0:
+                    b[-1] = str((sm / k * 100) // 1 / 100)
+                else:
+                    b[-1] = '-'
+            else:
+                b[-1] = '-'
+            a.append(b)
+
+        return render_template("user.html", headings=headings, data=a, us=us)
+    else:
+        return redirect("/")
+
+
 @app.route("/predmet/<int:id>/<int:pred>")
 def predmet(id, pred):
     if userUs:
@@ -262,7 +310,7 @@ def login():
                 us = 'user'
                 nameUs = user.name
                 userUs = user
-                return redirect("/")
+                return redirect("/user")
         else:
             teacher = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
             if teacher:

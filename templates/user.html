@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Оценки</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+{% extends "base.html" %}
+
+{% block content %}
+<table class="table">
+    <tr class="table__header">
+        {% for header in headings %}
+        <th class="table__cell"> {{ header }}</th>
+        {% endfor %}
+    </tr>
+    {% for row in data %}
+        <tr class="table__row">
+            {% for cell in row %}
+                <td class="table__cell"> {{ cell }} </td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+{% endblock %}
+</body>
+</html>
