@@ -1,3 +1,4 @@
+import os
 from os import abort
 
 from flask import Flask, render_template, redirect, make_response, request
@@ -153,7 +154,8 @@ def user():
             headings.insert(1, str(i))
 
         kk = 0
-        for i in db_sess.query(Predmet):
+
+        for i in db_sess.query(Predmet).order_by(Predmet.name):
             kk += 1
             evalutions = db_sess.query(Evaluation).filter(Evaluation.idUser == userUs.id).filter(
                 Evaluation.idPredmet == i.id)
@@ -447,7 +449,7 @@ def new_user_admin():
                 return render_template('registerUserAdmin.html', title='Новый ученик',
                                        form=form,
                                        message="Такого ученика не существует!", us=us, nameUs=nameUs)
-            if user.classId != -1:
+            if not (user.classId == 0 or user.classId == -1):
                 return render_template('registerUserAdmin.html', title='Новый ученик',
                                        form=form,
                                        message="Такой ученик учится в другой школе!", us=us, nameUs=nameUs)
@@ -703,4 +705,5 @@ def admin_delete(id):
 
 
 if __name__ == '__main__':
-    main()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
