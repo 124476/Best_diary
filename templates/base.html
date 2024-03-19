@@ -15,6 +15,9 @@
         <a class="navbar-brand" href="#">Лучший учебник</a>
         {% if us != "None" %}
             <a class="navbar-brand" href="/logout">{{ nameUs }}</a>
+            <p>
+                <a class="btn btn-success" href="/logout">Выйти</a>
+            </p>
         {% else %}
             <p>
                 <a class="btn btn-success" href="/login">Войти</a>

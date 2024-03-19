@@ -28,10 +28,6 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 db_sess = db_session.global_init('db/Dbase.db')
-us = 'None'
-nameUs = ""
-userUs = None
-classsId = 0
 
 
 def main():
@@ -40,76 +36,113 @@ def main():
 
 @app.route("/")
 def index():
-    return render_template("index.html", us=us, nameUs=nameUs)
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        if us == 'user':
+            return redirect("/user")
+        elif us == 'teacher':
+            return redirect("/teacher")
+        elif us == 'admin':
+            return redirect("/admin")
+        elif us == 'developer':
+            return redirect("/developer")
+    return render_template("index.html", us="None")
 
 
 @app.route("/admin")
 def admin():
-    try:
+    coc = request.cookies.get("coc", 0)
+    if coc:
         db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(Admin.id == int(coc.split(';')[0])).first()
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         a = []
         for i in db_sess.query(Classs).filter(Classs.adminId == userUs.id):
             a.append([i.id, i.name])
-        db_sess = db_session.create_session()
         b = []
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
             b.append([i.id, i.name, i.surname])
         return render_template("admin.html", us=us, nameUs=nameUs, news=a, newss=b)
-    except Exception:
+    else:
         return redirect("/")
 
 
 @app.route("/allUsers")
 def allUsers():
-    global classsId
-    db_sess = db_session.create_session()
-    a = []
-    for i in db_sess.query(User):
-        a.append([i.id, i.surname, i.name])
-    return render_template('allUsers.html',
-                           title='Ученики',
-                           news=a, us=us, nameUs=nameUs)
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(User):
+            a.append([i.id, i.surname, i.name])
+        return render_template('allUsers.html',
+                               title='Ученики',
+                               news=a, us=us, nameUs=nameUs)
+    else:
+        return redirect("/")
 
 
 @app.route("/classes/<int:id>")
 def classes(id):
-    global classsId
-    db_sess = db_session.create_session()
-    classsId = id
-    a = []
-    for i in db_sess.query(User).filter(User.classId == id):
-        a.append([i.id, i.surname, i.name])
-    return render_template("classes.html", us=us, nameUs=nameUs, news=a)
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(User).filter(User.classId == id):
+            a.append([i.id, i.surname, i.name])
+
+        res = make_response(render_template("classes.html", us=us, nameUs=nameUs, news=a))
+        res.set_cookie('coc', coc.split(';')[0] + ';' + coc.split(';')[1] + ';' + coc.split(';')[2] + ';' + str(id),
+                       max_age=60 * 60 * 24 * 7)
+        return res
+    else:
+        return redirect('/')
 
 
 @app.route("/allTeachers")
 def allTeachers():
-    try:
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         db_sess = db_session.create_session()
         a = []
         for i in db_sess.query(Teacher):
             a.append([i.id, i.surname, i.name])
         return render_template("allTeachers.html", us=us, nameUs=nameUs, news=a)
-    except Exception:
+    else:
         return redirect("/")
 
 
 @app.route("/allTeachersAdmin")
 def allTeachersAdmin():
-    try:
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(Admin.id == int(coc.split(';')[0])).first()
         a = []
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
             a.append([i.id, i.surname, i.name])
         return render_template("allTeachersAdmin.html", us=us, nameUs=nameUs, news=a)
-    except Exception:
+    else:
         return redirect("/")
 
 
 @app.route("/developer")
 def developer():
-    if userUs:
+    coc = request.cookies.get("coc", 0)
+    if coc:
         db_sess = db_session.create_session()
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         a = []
         for i in db_sess.query(Admin).all():
             a.append([i.id, i.surname, i.name, i.school])
@@ -121,8 +154,11 @@ def developer():
 
 @app.route("/teacher")
 def teacher():
-    if userUs:
+    coc = request.cookies.get("coc", 0)
+    if coc:
         db_sess = db_session.create_session()
+        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
+        nameUs = coc.split(';')[2]
         a = []
         for i in db_sess.query(PredmetAndTeacher).filter(PredmetAndTeacher.idTeacher == userUs.id):
             classs = db_sess.query(Classs).filter(Classs.id == i.idClass).first()
@@ -135,9 +171,12 @@ def teacher():
 
 @app.route("/user")
 def user():
-    if userUs:
-        headings = ["Предмет", "Средний балл"]
+    coc = request.cookies.get("coc", 0)
+    if coc:
         db_sess = db_session.create_session()
+        userUs = db_sess.query(User).filter(User.id == int(coc.split(';')[0])).first()
+        us = coc.split(';')[1]
+        headings = ["Предмет", "Средний балл"]
         a = []
 
         mx = 0
@@ -145,7 +184,7 @@ def user():
             evalutions = db_sess.query(Evaluation).filter(Evaluation.idUser == userUs.id).filter(
                 Evaluation.idPredmet == i.id)
             p = 0
-            for j in evalutions:
+            for _ in evalutions:
                 p += 1
             if mx < p:
                 mx = p
@@ -184,8 +223,11 @@ def user():
 
 @app.route("/predmet/<int:id>/<int:pred>")
 def predmet(id, pred):
-    if userUs:
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
         db_sess = db_session.create_session()
+        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
         evalutions = db_sess.query(Evaluation).filter(
             Evaluation.idUser == id).filter(Evaluation.idTeacher == userUs.id).filter(Evaluation.idPredmet == pred)
 
@@ -204,9 +246,12 @@ def predmet(id, pred):
 def teacher_class(id, pred):
     if request.form.get("edit"):
         return redirect(f"/predmet/{request.form.get('edit')}/{pred}")
-    if userUs:
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
         headings = ["№", "Ученик", "Средний балл", '']
         db_sess = db_session.create_session()
+        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
         a = []
         for i in db_sess.query(User).filter(User.classId == id):
             evalutions = db_sess.query(Evaluation).filter(
@@ -250,32 +295,39 @@ def teacher_class(id, pred):
 
 @app.route('/newEvaluation/<int:id>/<int:pred>', methods=['GET', 'POST'])
 def new_evaluation(id, pred):
-    form = RegisterFormEvaluation()
-    if form.validate_on_submit():
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         db_sess = db_session.create_session()
-        eva = db_sess.query(Evaluation).filter(
-            Evaluation.name == form.name.data).filter(Evaluation.idUser == id).filter(
-            Evaluation.idPredmet == pred).first()
-        if eva:
-            return render_template('registerEvaluation.html', title='Новая оценка',
-                                   form=form,
-                                   message="За такое событие оценка стоит!", us=us, nameUs=nameUs)
+        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
+        form = RegisterFormEvaluation()
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            eva = db_sess.query(Evaluation).filter(
+                Evaluation.name == form.name.data).filter(Evaluation.idUser == id).filter(
+                Evaluation.idPredmet == pred).first()
+            if eva:
+                return render_template('registerEvaluation.html', title='Новая оценка',
+                                       form=form,
+                                       message="За такое событие оценка стоит!", us=us, nameUs=nameUs)
 
-        eva = Evaluation(
-            idUser=id,
-            idPredmet=pred,
-            type=form.type.data,
-            name=form.name.data,
-            idTeacher=userUs.id
-        )
+            eva = Evaluation(
+                idUser=id,
+                idPredmet=pred,
+                type=form.type.data,
+                name=form.name.data,
+                idTeacher=userUs.id
+            )
 
-        db_sess.add(eva)
-        db_sess.commit()
+            db_sess.add(eva)
+            db_sess.commit()
 
-        classs = db_sess.query(Classs).filter(
-            Classs.id == db_sess.query(User).filter(User.id == id).first().classId).first()
-        return redirect(f'/teacher_class/{classs.id}/{pred}')
-    return render_template('registerEvaluation.html', title='Новая оценка', form=form, us=us, nameUs=nameUs)
+            classs = db_sess.query(Classs).filter(
+                Classs.id == db_sess.query(User).filter(User.id == id).first().classId).first()
+            return redirect(f'/teacher_class/{classs.id}/{pred}')
+        return render_template('registerEvaluation.html', title='Новая оценка', form=form, us=us, nameUs=nameUs)
+    return redirect('/')
 
 
 @app.route('/predmet_delete/<int:id>/<int:userr>', methods=['GET', 'POST'])
@@ -301,7 +353,14 @@ def load_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    global us, nameUs, userUs
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+    else:
+        us = 'None'
+        nameUs = 'None'
+
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -309,109 +368,122 @@ def login():
         if user:
             if user.check_password(form.password.data):
                 login_user(user, remember=form.remember_me.data)
-                us = 'user'
-                nameUs = user.name
-                userUs = user
-                return redirect("/user")
+                res = make_response(redirect("/user"))
+                res.set_cookie('coc', str(user.id) + ';' + 'user' + ';' + str(user.name),
+                               max_age=60 * 60 * 24 * 7)
+                return res
         else:
             teacher = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
             if teacher:
                 if teacher.check_password(form.password.data):
                     login_user(teacher, remember=form.remember_me.data)
-                    us = 'teacher'
-                    nameUs = teacher.name
-                    userUs = teacher
-                    return redirect("/teacher")
+                    res = make_response(redirect("/teacher"))
+                    res.set_cookie('coc', str(teacher.id) + ';' + 'teacher' + ';' + str(teacher.name),
+                                   max_age=60 * 60 * 24 * 7)
+                    return res
             else:
                 admin = db_sess.query(Admin).filter(Admin.login == form.login.data).first()
                 if admin:
                     if admin.check_password(form.password.data):
                         login_user(admin, remember=form.remember_me.data)
-                        us = 'admin'
-                        nameUs = admin.name
-                        userUs = admin
-                        return redirect("/admin")
+                        res = make_response(redirect("/admin"))
+                        res.set_cookie('coc', str(admin.id) + ';' + 'admin' + ';' + str(admin.name),
+                                       max_age=60 * 60 * 24 * 7)
+                        return res
                 else:
                     developer = db_sess.query(Developer).filter(Developer.login == form.login.data).first()
                     if developer:
                         if developer.check_password(form.password.data):
                             login_user(developer, remember=form.remember_me.data)
-                            us = 'developer'
-                            nameUs = developer.login
-                            userUs = developer
-                            return redirect("/developer")
-            us = "None"
-            userUs = None
+                            res = make_response(redirect("/developer"))
+                            res.set_cookie('coc', str(developer.id) + ';' + 'developer' + ';' + str(developer.login),
+                                           max_age=60 * 60 * 24 * 7)
+                            return res
             return render_template('login.html',
                                    message="Неправильный логин или пароль",
-                                   form=form, us=us, nameUs=nameUs)
+                                   form=form, us="None", nameUs=nameUs)
     return render_template('login.html', title='Авторизация', form=form, us=us, nameUs=nameUs)
 
 
 @app.route('/logout')
 def logout():
-    global us, nameUs, userUs
-    us = "None"
-    nameUs = ""
-    userUs = None
-    return redirect("/")
+    res = make_response(redirect("/"))
+    res.set_cookie("coc", '1', max_age=0)
+    return res
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
     form = RegisterForm()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        if db_sess.query(User).filter(User.login == form.login.data).first() \
-                or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
-                or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
-                or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
-            return render_template('register.html', title='Новый ученик',
-                                   form=form,
-                                   message="Такой логин уже есть", us=us, nameUs=nameUs)
-        user = User(
-            name=form.name.data,
-            surname=form.surname.data,
-            login=form.login.data,
-            email=form.email.data,
-            classId=classsId
-        )
-        user.set_password(form.password.data)
-        db_sess.add(user)
-        db_sess.commit()
-        return redirect(f'/allUsers')
-    return render_template('register.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        classsId = int(coc.split(';')[3])
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            if db_sess.query(User).filter(User.login == form.login.data).first() \
+                    or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
+                    or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
+                    or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
+                return render_template('register.html', title='Новый ученик',
+                                       form=form,
+                                       message="Такой логин уже есть", us=us, nameUs=nameUs)
+            user = User(
+                name=form.name.data,
+                surname=form.surname.data,
+                login=form.login.data,
+                email=form.email.data,
+                classId=classsId
+            )
+            user.set_password(form.password.data)
+            db_sess.add(user)
+            db_sess.commit()
+            return redirect(f'/allUsers')
+        return render_template('register.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
+    else:
+        return redirect('/')
 
 
 @app.route('/newAdmin', methods=['GET', 'POST'])
 def new_admin():
     form = RegisterFormAdmin()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        if db_sess.query(User).filter(User.login == form.login.data).first() \
-                or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
-                or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
-                or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
-            return render_template('registerAdmin.html', title='Новый админ',
-                                   form=form,
-                                   message="Такой логин уже есть", us=us, nameUs=nameUs)
-        admin = Admin(
-            surname=form.surname.data,
-            name=form.name.data,
-            school=form.school.data,
-            login=form.login.data,
-            email=form.email.data
-        )
-        admin.set_password(form.password.data)
-        db_sess.add(admin)
-        db_sess.commit()
-        return redirect('/developer')
-    return render_template('registerAdmin.html', title='Новый админ', form=form, us=us, nameUs=nameUs)
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        classsId = int(coc.split(';')[3])
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            if db_sess.query(User).filter(User.login == form.login.data).first() \
+                    or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
+                    or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
+                    or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
+                return render_template('registerAdmin.html', title='Новый админ',
+                                       form=form,
+                                       message="Такой логин уже есть", us=us, nameUs=nameUs)
+            admin = Admin(
+                surname=form.surname.data,
+                name=form.name.data,
+                school=form.school.data,
+                login=form.login.data,
+                email=form.email.data
+            )
+            admin.set_password(form.password.data)
+            db_sess.add(admin)
+            db_sess.commit()
+            return redirect('/developer')
+        return render_template('registerAdmin.html', title='Новый админ', form=form, us=us, nameUs=nameUs)
+    else:
+        return redirect('/')
 
 
 @app.route('/newTeacher', methods=['GET', 'POST'])
 def new_teacher():
-    try:
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         form = RegisterFormTeacher()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -427,20 +499,24 @@ def new_teacher():
                 name=form.name.data,
                 login=form.login.data,
                 email=form.email.data,
-                adminId=userUs.id
+                adminId=int(coc.split(';')[0])
             )
             teacher.set_password(form.password.data)
             db_sess.add(teacher)
             db_sess.commit()
             return redirect('/allTeachers')
         return render_template('registerTeacher.html', title='Новый учитель', form=form, us=us, nameUs=nameUs)
-    except Exception:
+    else:
         return redirect("/")
 
 
 @app.route('/newUserAdmin', methods=['GET', 'POST'])
 def new_user_admin():
-    try:
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        classsId = int(coc.split(';')[3])
         form = RegisterFormUserAdmin()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -453,18 +529,21 @@ def new_user_admin():
                 return render_template('registerUserAdmin.html', title='Новый ученик',
                                        form=form,
                                        message="Такой ученик учится в другой школе!", us=us, nameUs=nameUs)
-            user.adminId = userUs.id
+            user.adminId = int(coc.split(';')[0])
             user.classId = classsId
             db_sess.commit()
             return redirect(f'/classes/{classsId}')
         return render_template('registerUserAdmin.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
-    except Exception:
+    else:
         return redirect("/")
 
 
 @app.route('/newTeacherAdmin', methods=['GET', 'POST'])
 def new_teacher_admin():
-    try:
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         form = RegisterFormTeacherAdmin()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -477,125 +556,146 @@ def new_teacher_admin():
                 return render_template('registerTeacherAdmin.html', title='Новый учитель',
                                        form=form,
                                        message="Такой учитель работает в другой школе!", us=us, nameUs=nameUs)
-            teacher.adminId = userUs.id
+            teacher.adminId = int(coc.split(';')[0])
             db_sess.commit()
             return redirect('/allTeachersAdmin')
         return render_template('registerTeacherAdmin.html', title='Новый учитель', form=form, us=us, nameUs=nameUs)
-    except Exception:
+    else:
         return redirect("/")
 
 
 @app.route('/newClass', methods=['GET', 'POST'])
 def new_class():
-    try:
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         form = RegisterFormClass()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             classs = Classs(
                 name=form.name.data,
-                adminId=userUs.id
+                adminId=int(coc.split(';')[0])
             )
             db_sess.add(classs)
             db_sess.commit()
             return redirect('/admin')
         return render_template('registerClass.html', title='Новый класс', form=form, us=us, nameUs=nameUs)
-    except Exception:
+    else:
         return redirect("/")
 
 
 @app.route('/newTeacher/<int:id>', methods=['GET', 'POST'])
 def edit_teacher(id):
-    form = RegisterFormTeacher()
-    if request.method == "GET":
-        db_sess = db_session.create_session()
-        teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
-        if teacher:
-            form.surname.data = teacher.surname
-            form.name.data = teacher.name
-            form.login.data = teacher.login
-            form.email.data = teacher.email
-        else:
-            abort(404)
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
-        if teacher:
-            teacher.surname = form.surname.data
-            teacher.name = form.name.data
-            teacher.login = form.login.data
-            teacher.email = form.email.data
-            teacher.set_password(form.password.data)
-            db_sess.commit()
-            return redirect('/allTeachers')
-        else:
-            abort(404)
-    return render_template('registerTeacher.html',
-                           title='Редактирование учителя',
-                           form=form, us=us, nameUs=nameUs)
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        form = RegisterFormTeacher()
+        if request.method == "GET":
+            db_sess = db_session.create_session()
+            teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+            if teacher:
+                form.surname.data = teacher.surname
+                form.name.data = teacher.name
+                form.login.data = teacher.login
+                form.email.data = teacher.email
+            else:
+                abort(404)
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+            if teacher:
+                teacher.surname = form.surname.data
+                teacher.name = form.name.data
+                teacher.login = form.login.data
+                teacher.email = form.email.data
+                teacher.set_password(form.password.data)
+                db_sess.commit()
+                return redirect('/allTeachers')
+            else:
+                abort(404)
+        return render_template('registerTeacher.html',
+                               title='Редактирование учителя',
+                               form=form, us=us, nameUs=nameUs)
+    else:
+        return redirect('/')
 
 
 @app.route('/newUser/<int:id>', methods=['GET', 'POST'])
 def edit_user(id):
-    form = RegisterForm()
-    if request.method == "GET":
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.id == id).first()
-        if user:
-            form.surname.data = user.surname
-            form.name.data = user.name
-            form.login.data = user.login
-            form.email.data = user.email
-        else:
-            abort(404)
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.id == id).first()
-        if user:
-            user.surname = form.surname.data
-            user.name = form.name.data
-            user.login = form.login.data
-            user.email = form.email.data
-            user.set_password(form.password.data)
-            db_sess.commit()
-            return redirect(f'/developer')
-        else:
-            abort(404)
-    return render_template('register.html',
-                           title='Редактирование ученика',
-                           form=form, us=us, nameUs=nameUs)
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        form = RegisterForm()
+        if request.method == "GET":
+            db_sess = db_session.create_session()
+            user = db_sess.query(User).filter(User.id == id).first()
+            if user:
+                form.surname.data = user.surname
+                form.name.data = user.name
+                form.login.data = user.login
+                form.email.data = user.email
+            else:
+                abort(404)
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            user = db_sess.query(User).filter(User.id == id).first()
+            if user:
+                user.surname = form.surname.data
+                user.name = form.name.data
+                user.login = form.login.data
+                user.email = form.email.data
+                user.set_password(form.password.data)
+                db_sess.commit()
+                return redirect(f'/developer')
+            else:
+                abort(404)
+        return render_template('register.html',
+                               title='Редактирование ученика',
+                               form=form, us=us, nameUs=nameUs)
+    else:
+        return redirect('/')
 
 
 @app.route('/newAdmin/<int:id>', methods=['GET', 'POST'])
 def edit_admin(id):
-    form = RegisterFormAdmin()
-    if request.method == "GET":
-        db_sess = db_session.create_session()
-        admin = db_sess.query(Admin).filter(Admin.id == id).first()
-        if admin:
-            form.surname.data = admin.surname
-            form.name.data = admin.name
-            form.login.data = admin.login
-            form.school.data = admin.school
-            form.email.data = admin.email
-        else:
-            abort(404)
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        admin = db_sess.query(Admin).filter(Admin.id == id).first()
-        if admin:
-            admin.surname = form.surname.data
-            admin.name = form.name.data
-            admin.login = form.login.data
-            admin.email = form.email.data
-            admin.school = form.school.data
-            admin.set_password(form.password.data)
-            db_sess.commit()
-            return redirect(f'/allUsers')
-        else:
-            abort(404)
-    return render_template('registerAdmin.html',
-                           title='Редактирование директора',
-                           form=form, us=us, nameUs=nameUs)
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        form = RegisterFormAdmin()
+        if request.method == "GET":
+            db_sess = db_session.create_session()
+            admin = db_sess.query(Admin).filter(Admin.id == id).first()
+            if admin:
+                form.surname.data = admin.surname
+                form.name.data = admin.name
+                form.login.data = admin.login
+                form.school.data = admin.school
+                form.email.data = admin.email
+            else:
+                abort(404)
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            admin = db_sess.query(Admin).filter(Admin.id == id).first()
+            if admin:
+                admin.surname = form.surname.data
+                admin.name = form.name.data
+                admin.login = form.login.data
+                admin.email = form.email.data
+                admin.school = form.school.data
+                admin.set_password(form.password.data)
+                db_sess.commit()
+                return redirect(f'/allUsers')
+            else:
+                abort(404)
+        return render_template('registerAdmin.html',
+                               title='Редактирование директора',
+                               form=form, us=us, nameUs=nameUs)
+    else:
+        return redirect('/')
 
 
 @app.route('/class_delete/<int:id>', methods=['GET', 'POST'])
@@ -612,35 +712,43 @@ def class_delete(id):
 
 @app.route('/newTeacherAdmin/<int:id>', methods=['GET', 'POST'])
 def new_teacherAdmin(id):
-    form = RegisterFormTeacherClass()
-    if form.validate_on_submit():
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
         db_sess = db_session.create_session()
-        classs = db_sess.query(Classs).filter(Classs.id == form.login.data).first()
-        teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
-        if not classs:
-            return render_template('registerTeacherClass.html', title='Подключение учителя',
-                                   form=form,
-                                   message="Такого класса в школе нет!", us=us, nameUs=nameUs)
-        if classs.adminId != userUs.id:
-            return render_template('registerTeacherClass.html', title='Подключение учителя',
-                                   form=form,
-                                   message="Такого класса нет в школе!", us=us, nameUs=nameUs)
-        predmet = db_sess.query(Predmet).filter(Predmet.id == form.predmet.data).first()
-        if not predmet:
-            return render_template('registerTeacherClass.html', title='Подключение учителя',
-                                   form=form,
-                                   message="Такого предмета нет!", us=us, nameUs=nameUs)
+        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
+        form = RegisterFormTeacherClass()
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            classs = db_sess.query(Classs).filter(Classs.id == form.login.data).first()
+            teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
+            if not classs:
+                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                       form=form,
+                                       message="Такого класса в школе нет!", us=us, nameUs=nameUs)
+            if classs.adminId != userUs.id:
+                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                       form=form,
+                                       message="Такого класса нет в школе!", us=us, nameUs=nameUs)
+            predmet = db_sess.query(Predmet).filter(Predmet.id == form.predmet.data).first()
+            if not predmet:
+                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                                       form=form,
+                                       message="Такого предмета нет!", us=us, nameUs=nameUs)
 
-        db_sess = db_session.create_session()
-        predmetAndTeacher = PredmetAndTeacher(
-            idPredmet=predmet.id,
-            idClass=classs.id,
-            idTeacher=teacher.id
-        )
-        db_sess.add(predmetAndTeacher)
-        db_sess.commit()
-        return redirect('/allTeachersAdmin')
-    return render_template('registerTeacherClass.html', title='Подключение учителя', form=form, us=us, nameUs=nameUs)
+            db_sess = db_session.create_session()
+            predmetAndTeacher = PredmetAndTeacher(
+                idPredmet=predmet.id,
+                idClass=classs.id,
+                idTeacher=teacher.id
+            )
+            db_sess.add(predmetAndTeacher)
+            db_sess.commit()
+            return redirect('/allTeachersAdmin')
+        return render_template('registerTeacherClass.html', title='Подключение учителя', form=form, us=us,
+                               nameUs=nameUs)
+    return redirect('/')
 
 
 @app.route('/teacher_delete/<int:id>', methods=['GET', 'POST'])
@@ -657,15 +765,19 @@ def teacher_delete(id):
 
 @app.route('/user_deleteAdmin/<int:id>', methods=['GET', 'POST'])
 def user_deleteAdmin(id):
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.id == id).first()
-    if user:
-        user.adminId = -1
-        user.classId = -1
-        db_sess.commit()
-    else:
-        abort(404)
-    return redirect(f'/classes/{classsId}')
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        classsId = int(coc.split(';')[3])
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == id).first()
+        if user:
+            user.adminId = -1
+            user.classId = -1
+            db_sess.commit()
+        else:
+            abort(404)
+        return redirect(f'/classes/{classsId}')
+    return redirect('/')
 
 
 @app.route('/teacher_deleteAdmin/<int:id>', methods=['GET', 'POST'])
