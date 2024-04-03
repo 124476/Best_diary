@@ -2,6 +2,12 @@ import os
 from os import abort
 
 from flask import Flask, render_template, redirect, make_response, request
+from flask_restful import reqparse, abort, Api, Resource
+
+import teachers_api
+import user_api
+import users_resource
+import teachers_resource
 from data import db_session
 from data.admins import Admin
 from data.developers import Developer
@@ -23,11 +29,24 @@ from flask_login import LoginManager, login_user, logout_user, login_required
 from forms.userAdmin import RegisterFormUserAdmin
 
 app = Flask(__name__)
+api = Api(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
 db_sess = db_session.global_init('db/Dbase.db')
+
+# для списка объектов
+api.add_resource(users_resource.UsersListResource, '/api/v2/users')
+api.add_resource(teachers_resource.TeachersListResource, '/api/v2/teachers')
+
+# для одного объекта
+api.add_resource(users_resource.UsersResource, '/api/v2/users/<int:users_id>')
+api.add_resource(teachers_resource.TeachersResource, '/api/v2/teachers/<int:teachers_id>')
+
+app.register_blueprint(user_api.blueprint)
+app.register_blueprint(teachers_api.blueprint)
 
 
 def main():
