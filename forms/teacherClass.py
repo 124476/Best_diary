@@ -4,6 +4,6 @@ from wtforms.validators import DataRequired
 
 
 class RegisterFormTeacherClass(FlaskForm):
-    login = IntegerField('Id класса:', validators=[DataRequired()])
+    login = IntegerField('Название класса:', validators=[DataRequired()])
     predmet = IntegerField('Id предмета:', validators=[DataRequired()])
     submit = SubmitField('Добавить')

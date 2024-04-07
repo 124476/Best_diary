@@ -438,7 +438,6 @@ def reqister():
     if coc:
         us = coc.split(';')[1]
         nameUs = coc.split(';')[2]
-        classsId = int(coc.split(';')[3])
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             if db_sess.query(User).filter(User.login == form.login.data).first() \
@@ -453,7 +452,7 @@ def reqister():
                 surname=form.surname.data,
                 login=form.login.data,
                 email=form.email.data,
-                classId=classsId
+                classId=-1
             )
             user.set_password(form.password.data)
             db_sess.add(user)
@@ -471,7 +470,6 @@ def new_admin():
     if coc:
         us = coc.split(';')[1]
         nameUs = coc.split(';')[2]
-        classsId = int(coc.split(';')[3])
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             if db_sess.query(User).filter(User.login == form.login.data).first() \
@@ -518,7 +516,7 @@ def new_teacher():
                 name=form.name.data,
                 login=form.login.data,
                 email=form.email.data,
-                adminId=int(coc.split(';')[0])
+                adminId=-1
             )
             teacher.set_password(form.password.data)
             db_sess.add(teacher)
@@ -740,7 +738,7 @@ def new_teacherAdmin(id):
         form = RegisterFormTeacherClass()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
-            classs = db_sess.query(Classs).filter(Classs.id == form.login.data).first()
+            classs = db_sess.query(Classs).filter(Classs.name == form.login.data).first()
             teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
             if not classs:
                 return render_template('registerTeacherClass.html', title='Подключение учителя',
