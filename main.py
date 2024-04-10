@@ -1,7 +1,7 @@
 import os
 from os import abort
 
-from flask import Flask, render_template, redirect, make_response, request
+from flask import Flask, render_template, redirect, make_response, request, url_for
 from flask_restful import reqparse, abort, Api, Resource
 
 import teachers_api
@@ -11,6 +11,7 @@ import teachers_resource
 from data import db_session
 from data.admins import Admin
 from data.developers import Developer
+from data.tems import Tems
 from data.evaluations import Evaluation
 from data.teachers import Teacher
 from data.users import User
@@ -66,7 +67,12 @@ def index():
             return redirect("/admin")
         elif us == 'developer':
             return redirect("/developer")
-    return render_template("index.html", us="None")
+
+    db_sess = db_session.create_session()
+    a = []
+    for i in db_sess.query(Tems):
+        a.append([i.name, i.text.split('\\n')])
+    return render_template("index.html", us="None", listTems=a)
 
 
 @app.route("/admin")
@@ -801,12 +807,55 @@ def user_deleteAdmin(id):
 def teacher_deleteAdmin(id):
     db_sess = db_session.create_session()
     teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
-    if admin:
+    if teacher:
         teacher.adminId = -1
         db_sess.commit()
     else:
         abort(404)
     return redirect('/allTeachersAdmin')
+
+
+@app.route('/uplode', methods=['POST', 'GET'])
+def sample_file_upload():
+    coc = request.cookies.get("coc", 0)
+    if coc and coc.split(';')[1] == 'developer':
+        if request.method == 'GET':
+            return f'''<!doctype html>
+                            <html lang="en">
+                              <head>
+                                <meta charset="utf-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+                                 <link rel="stylesheet"
+                                 href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
+                                 integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
+                                 crossorigin="anonymous">
+                                <link rel="stylesheet" type="text/css" href="{url_for('static', filename='css/style.css')}" />
+                                <title>Загрузка файла</title>
+                              </head>
+                              <body>
+                                <h1>Загрузим файл</h1>
+                                <form method="post" enctype="multipart/form-data">
+                                   <div class="form-group">
+                                        <label for="photo">Выберите файл</label>
+                                        <input type="file" class="form-control-file" id="photo" name="file">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Отправить</button>
+                                </form>
+                              </body>
+                            </html>'''
+        elif request.method == 'POST':
+            try:
+                db_sess = db_session.create_session()
+                tem = Tems(
+                    name=str(request.files['file'].readline())[2:-1].replace("\r", "").replace("\n", ""),
+                    text=str(request.files['file'].read())[2:-1].replace("\r", "")
+                )
+                db_sess.add(tem)
+                db_sess.commit()
+            except:
+                pass
+
+    return redirect('/')
 
 
 @app.route('/user_delete/<int:id>', methods=['GET', 'POST'])

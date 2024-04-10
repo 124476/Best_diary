@@ -6,3 +6,4 @@ from . import admins
 from . import classes
 from . import predmet
 from . import predmetAndTeacher
+from . import tems

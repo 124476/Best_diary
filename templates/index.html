@@ -9,8 +9,23 @@
 
 {% block content %}
 <h1 align="center">Лучший дневник</h1>
-{% endblock %}
+{% for item in listTems%}
+<p>
 
+
+</p>
+<div class="col-md6 border rounded">
+    <p>
+
+    </p>
+    <h2>{{item[0]}}</h2>
+    {% for item2 in item[1]%}
+    <p>
+    </p>{{item2}}
+    {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}
 
 </body>
 </html>
