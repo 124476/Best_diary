@@ -5,6 +5,7 @@ from flask import Flask, render_template, redirect, make_response, request, url_
 from flask_restful import reqparse, abort, Api, Resource
 
 import teachers_api
+import tems_api
 import user_api
 import users_resource
 import teachers_resource
@@ -48,6 +49,7 @@ api.add_resource(teachers_resource.TeachersResource, '/api/v2/teachers/<int:teac
 
 app.register_blueprint(user_api.blueprint)
 app.register_blueprint(teachers_api.blueprint)
+app.register_blueprint(tems_api.blueprint)
 
 
 def main():
@@ -833,10 +835,9 @@ def sample_file_upload():
                                 <title>Загрузка файла</title>
                               </head>
                               <body>
-                                <h1>Загрузим файл</h1>
+                                <h1>Загрузка новости</h1>
                                 <form method="post" enctype="multipart/form-data">
                                    <div class="form-group">
-                                        <label for="photo">Выберите файл</label>
                                         <input type="file" class="form-control-file" id="photo" name="file">
                                     </div>
                                     <button type="submit" class="btn btn-primary">Отправить</button>
