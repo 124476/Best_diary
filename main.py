@@ -822,28 +822,7 @@ def sample_file_upload():
     coc = request.cookies.get("coc", 0)
     if coc and coc.split(';')[1] == 'developer':
         if request.method == 'GET':
-            return f'''<!doctype html>
-                            <html lang="en">
-                              <head>
-                                <meta charset="utf-8">
-                                <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-                                 <link rel="stylesheet"
-                                 href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
-                                 integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
-                                 crossorigin="anonymous">
-                                <link rel="stylesheet" type="text/css" href="{url_for('static', filename='css/style.css')}" />
-                                <title>Загрузка файла</title>
-                              </head>
-                              <body>
-                                <h1>Загрузка новости</h1>
-                                <form method="post" enctype="multipart/form-data">
-                                   <div class="form-group">
-                                        <input type="file" class="form-control-file" id="photo" name="file">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Отправить</button>
-                                </form>
-                              </body>
-                            </html>'''
+            return render_template("uplodeFails.html")
         elif request.method == 'POST':
             try:
                 db_sess = db_session.create_session()
@@ -855,8 +834,33 @@ def sample_file_upload():
                 db_sess.commit()
             except:
                 pass
+            return redirect('/allTems')
 
     return redirect('/')
+
+
+@app.route('/allTems', methods=['GET', 'POST'])
+def all_tems():
+    coc = request.cookies.get("coc", 0)
+    if coc and coc.split(';')[1] == 'developer':
+        db_sess = db_session.create_session()
+        a = []
+        for i in db_sess.query(Tems):
+            a.append([i.name, i.text.split('\\n'), i.id])
+        return render_template(f'allTems.html', us="developer", news=a)
+    return redirect('/')
+
+
+@app.route('/tems_delete/<int:id>', methods=['GET', 'POST'])
+def tem_delete(id):
+    db_sess = db_session.create_session()
+    tem = db_sess.query(Tems).filter(Tems.id == id).first()
+    if tem:
+        db_sess.delete(tem)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect(f'/allTems')
 
 
 @app.route('/user_delete/<int:id>', methods=['GET', 'POST'])
