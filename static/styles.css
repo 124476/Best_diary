@@ -15,3 +15,7 @@
 .table__cell{
     padding: 8px;
 }
+
+.custom-div {
+    background: linear-gradient(135deg,  #04e29c 0%,#6d0019 100%);
+}

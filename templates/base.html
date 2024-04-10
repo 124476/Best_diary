@@ -7,27 +7,56 @@
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous">
+    <style>
+        main {
+            min-height: 700px; /* Минимальная высота */
+            max-width: 800px; /* Максимальная ширина */
+            margin: 0 auto; /* Центрирование горизонтально */
+            padding: 20px; /* Отступы внутри элемента */
+        }
+        .custom-div {
+            background: linear-gradient(135deg,  #c9de96 0%,#8ab66b 67%,#398235 100%);
+        }
+        .custom-center {
+            align-items: center
+        }
+    </style>
     <title>{{title}}</title>
 </head>
 <body>
-<header>
-    <nav class="navbar navbar-light bg-light">
-        <a class="navbar-brand" href="#">Лучший учебник</a>
-        {% if us != "None" %}
-            <a class="navbar-brand" href="/logout">{{ nameUs }}</a>
-            <p>
-                <a class="btn btn-success" href="/logout">Выйти</a>
-            </p>
-        {% else %}
-            <p>
-                <a class="btn btn-success" href="/login">Войти</a>
-            </p>
-        {% endif %}
-    </nav>
-</header>
-<!-- Begin page content -->
-<main role="main" class="container">
-    {% block content %}{% endblock %}
-</main>
+<div class="custom-div">
+    <header>
+        <nav class="navbar navbar-light">
+            <a class="navbar-brand" href="#">Лучший учебник</a>
+            {% if us != "None" %}
+                <a class="navbar-brand" href="/logout">{{ nameUs }}</a>
+                <p>
+                    <a class="btn btn-success" href="/logout">Выйти</a>
+                </p>
+            {% else %}
+                <p>
+                    <a class="btn btn-success" href="/login">Войти</a>
+                </p>
+            {% endif %}
+        </nav>
+    </header>
+    <!-- Begin page content -->
+    <main role="main" class="container">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<footer>
+    <div class="custom-center">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Контакты создателя</h4>
+                    <p>Электронная почта: bestdiaryrussian@gmail.com</p>
+                </div>
+                <!-- Другие контакты или ссылки могут быть добавлены здесь -->
+            </div>
+        </div>
+    </div>
+</footer>
 </body>
 </html>

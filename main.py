@@ -440,7 +440,7 @@ def logout():
 
 
 @app.route('/register', methods=['GET', 'POST'])
-def reqister():
+def register():
     form = RegisterForm()
     coc = request.cookies.get("coc", 0)
     if coc:
@@ -848,8 +848,8 @@ def sample_file_upload():
             try:
                 db_sess = db_session.create_session()
                 tem = Tems(
-                    name=str(request.files['file'].readline())[2:-1].replace("\r", "").replace("\n", ""),
-                    text=str(request.files['file'].read())[2:-1].replace("\r", "")
+                    name=str(request.files['file'].readline())[2:-1].replace("\\r", "").replace("\\n", ""),
+                    text=str(request.files['file'].read())[2:-1].replace("\\r", "")
                 )
                 db_sess.add(tem)
                 db_sess.commit()
