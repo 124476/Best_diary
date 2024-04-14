@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Оценки</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+{% extends "base.html" %}
+
+{% block content %}
+{% for item in news%}
+<div class="container">
+    <div class="bg-secondary" style="margin: 30px;border: 5px white solid;border-radius: 5px;">
+        <h3 class="col-12">{{item[0]}}</h3>
+        {% for item2 in item[1]%}
+        <p class="col-6">{{item2}}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+</body>
+</html>

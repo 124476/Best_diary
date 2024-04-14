@@ -12,6 +12,7 @@ import teachers_resource
 from data import db_session
 from data.admins import Admin
 from data.developers import Developer
+from data.homeWork import HomeWork
 from data.tems import Tems
 from data.evaluations import Evaluation
 from data.teachers import Teacher
@@ -21,6 +22,7 @@ from data.predmet import Predmet
 from data.predmetAndTeacher import PredmetAndTeacher
 from forms.admin import RegisterFormAdmin
 from forms.classs import RegisterFormClass
+from forms.homeWork import RegisterFormHomeWork
 from forms.predmet import RegisterFormEvaluation
 from forms.teacher import RegisterFormTeacher
 from forms.teacherAdmin import RegisterFormTeacherAdmin
@@ -114,6 +116,64 @@ def allUsers():
                                news=a, us=us, nameUs=nameUs)
     else:
         return redirect("/")
+
+
+@app.route("/registerHomeWork/<int:pred>/<int:clas>", methods=['GET', 'POST'])
+def registerHomeWork(pred, clas):
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Teacher).filter(
+            Teacher.id == int(coc.split(';')[0])).first()
+        form = RegisterFormHomeWork()
+        if form.validate_on_submit():
+            db_sess = db_session.create_session()
+            homeWork = db_sess.query(HomeWork).filter(
+                HomeWork.classId == clas).filter(
+                HomeWork.predmetId == pred).filter(
+                HomeWork.teacherId == userUs.id).first()
+            if homeWork:
+                db_sess.delete(homeWork)
+
+            homeWork = HomeWork(
+                predmetId=pred,
+                classId=clas,
+                teacherId=userUs.id,
+                textDz=form.textDz.data
+            )
+
+            db_sess.add(homeWork)
+            db_sess.commit()
+            return redirect(f'/teacher')
+        return render_template('registerHomeWork.html', title='Домашняя работа',
+                               form=form, us=us, nameUs=nameUs)
+    return redirect('/')
+
+
+@app.route("/homeWork/<string:predmetName>")
+def homeWork(predmetName):
+    coc = request.cookies.get("coc", 0)
+    if coc:
+        userId = int(coc.split(';')[0])
+        us = coc.split(';')[1]
+        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        a = []
+        d = db_sess.query(Predmet)
+        for i in d:
+            if i.name == predmetName:
+                pred = i.id
+        for i in db_sess.query(HomeWork).filter(HomeWork.predmetId == pred) \
+                .filter(HomeWork.classId == db_sess.query(User).filter(User.id == userId)[0].classId):
+            a.append([db_sess.query(Predmet).filter(Predmet.id == pred)[0].name, i.textDz.split('\n')])
+
+        res = make_response(
+            render_template("homeWork.html", us=us, nameUs=nameUs, news=a))
+        return res
+    else:
+        return redirect('/')
 
 
 @app.route("/classes/<int:id>")
@@ -210,8 +270,10 @@ def teacher():
         return redirect("/")
 
 
-@app.route("/user")
+@app.route("/user", methods=['GET', 'POST'])
 def user():
+    if request.form.get("edit"):
+        return redirect(f"/homeWork/{request.form.get('edit')}")
     coc = request.cookies.get("coc", 0)
     if coc:
         db_sess = db_session.create_session()
@@ -340,9 +402,11 @@ def teacher_class(id, pred):
                 b[-2] = '-'
             b[-1] = i.id
             a.append(b)
+        textDz = db_sess.query(HomeWork).filter(HomeWork.classId == id).filter(HomeWork.teacherId == userUs.id).filter(
+            HomeWork.predmetId == pred).first().textDz
 
         return render_template("teacher_class.html", headings=headings, data=a,
-                               us=us)
+                               us=us, pred=pred, clas=id, textDz=textDz.split('\n'))
     else:
         return redirect("/")
 

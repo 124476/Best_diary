@@ -20,6 +20,12 @@
             {% for cell in row %}
                 <td class="table__cell"> {{ cell }} </td>
             {% endfor %}
+            <form action="" method="POST">
+            <input id="book_id" name="book_id"
+                   type="hidden" value="{{ row[-1] }}">
+            <td><button type="submit" name="edit" value="{{ row[0] }}"
+                        formmethod="post">Домашняя работа</button></td>
+            </form>
         </tr>
     {% endfor %}
 </table>
