@@ -8,39 +8,26 @@
 
 {% block content %}
 {% if us == "developer" %}
-<a href="newAdmin" class="btn btn-secondary">Добавить директора</a>
+<a href="newAdmin" class="btn btn-primary">Добавить директора</a>
 {% for item in news%}
-<p>
-
-
-</p>
-<div class="col-md6 border rounded">
-    <p>
-
-    </p>
-    <h2>{{item[3]}}</h2>
-    <div>
+<div class="bg-secondary" style="margin: 20px;border-radius: 5px;border-style: solid;border-color: white;">
+    <h2 class="col-6 mb-3">{{item[3]}}</h2>
+    <div class="col-6 mb-3">
         Директор: {{item[1]}} {{item[2]}}
     </div>
-    <div>
-        <p>
-
-        </p>
+    <div class="col-6 mb-3">
         <a href="newAdmin/{{ item[0] }}" class="btn btn-warning">
             Изменить
         </a>
         <a href="admin_delete/{{ item[0] }}" class="btn btn-danger">
             Удалить
         </a>
-        <p>
-
-        </p>
     </div>
 </div>
 {% endfor %}
-<a href="allUsers" class="btn btn-secondary">Ученики</a>
-<a href="allTeachers" class="btn btn-secondary">Учителя</a>
-<a href="allTems" class="btn btn-secondary">Новости</a>
+<a href="allUsers" class="btn btn-primary">Ученики</a>
+<a href="allTeachers" class="btn btn-primary">Учителя</a>
+<a href="allTems" class="btn btn-primary">Новости</a>
 {% endif %}
 {% endblock %}
 </body>

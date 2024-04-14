@@ -20,11 +20,20 @@
         .custom-center {
             align-items: center
         }
+        .custom-div_image_1 {
+            background: url('../static/images/wallpaper_1.jpg');
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
     </style>
     <title>{{title}}</title>
 </head>
 <body>
+{% if bg == "img" %}
+<div class="custom-div_image_1">
+{% else %}
 <div class="custom-div">
+{% endif %}
     <header>
         <nav class="navbar navbar-light">
             <a class="navbar-brand" href="#">Лучший учебник</a>

@@ -8,21 +8,15 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 align="center">Лучший дневник</h1>
+<h1 align="center" style="margin: 40px;">Лучший дневник</h1>
 {% for item in listTems%}
-<p>
-
-
-</p>
-<div class="col-md6 border rounded">
-    <p>
-
-    </p>
-    <h2>{{item[0]}}</h2>
-    {% for item2 in item[1]%}
-    <p>
-    </p>{{item2}}
-    {% endfor %}
+<div class="container">
+    <div class="bg-secondary" style="margin: 30px;border: 5px white solid;border-radius: 5px;">
+        <h3 class="col-12">{{item[0]}}</h3>
+        {% for item2 in item[1]%}
+        <p class="col-6">{{item2}}</p>
+        {% endfor %}
+    </div>
 </div>
 {% endfor %}
 {% endblock %}

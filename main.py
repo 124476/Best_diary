@@ -1,8 +1,8 @@
 import os
 from os import abort
 
-from flask import Flask, render_template, redirect, make_response, request, url_for
-from flask_restful import reqparse, abort, Api, Resource
+from flask import Flask, render_template, redirect, make_response, request
+from flask_restful import abort, Api
 
 import teachers_api
 import tems_api
@@ -26,7 +26,7 @@ from forms.teacher import RegisterFormTeacher
 from forms.teacherAdmin import RegisterFormTeacherAdmin
 from forms.teacherClass import RegisterFormTeacherClass
 from forms.user import RegisterForm, LoginForm
-from flask_login import LoginManager, login_user, logout_user, login_required
+from flask_login import LoginManager, login_user
 
 from forms.userAdmin import RegisterFormUserAdmin
 
@@ -45,7 +45,8 @@ api.add_resource(teachers_resource.TeachersListResource, '/api/v2/teachers')
 
 # для одного объекта
 api.add_resource(users_resource.UsersResource, '/api/v2/users/<int:users_id>')
-api.add_resource(teachers_resource.TeachersResource, '/api/v2/teachers/<int:teachers_id>')
+api.add_resource(teachers_resource.TeachersResource,
+                 '/api/v2/teachers/<int:teachers_id>')
 
 app.register_blueprint(user_api.blueprint)
 app.register_blueprint(teachers_api.blueprint)
@@ -74,7 +75,7 @@ def index():
     a = []
     for i in db_sess.query(Tems):
         a.append([i.name, i.text.split('\\n')])
-    return render_template("index.html", us="None", listTems=a)
+    return render_template("index.html", us="None", listTems=a, bg='img')
 
 
 @app.route("/admin")
@@ -82,7 +83,8 @@ def admin():
     coc = request.cookies.get("coc", 0)
     if coc:
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(Admin.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
         us = coc.split(';')[1]
         nameUs = coc.split(';')[2]
         a = []
@@ -91,7 +93,8 @@ def admin():
         b = []
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
             b.append([i.id, i.name, i.surname])
-        return render_template("admin.html", us=us, nameUs=nameUs, news=a, newss=b)
+        return render_template("admin.html", us=us, nameUs=nameUs, news=a,
+                               newss=b, bg='img')
     else:
         return redirect("/")
 
@@ -124,8 +127,11 @@ def classes(id):
         for i in db_sess.query(User).filter(User.classId == id):
             a.append([i.id, i.surname, i.name])
 
-        res = make_response(render_template("classes.html", us=us, nameUs=nameUs, news=a))
-        res.set_cookie('coc', coc.split(';')[0] + ';' + coc.split(';')[1] + ';' + coc.split(';')[2] + ';' + str(id),
+        res = make_response(
+            render_template("classes.html", us=us, nameUs=nameUs, news=a))
+        res.set_cookie('coc',
+                       coc.split(';')[0] + ';' + coc.split(';')[1] + ';' +
+                       coc.split(';')[2] + ';' + str(id),
                        max_age=60 * 60 * 24 * 7)
         return res
     else:
@@ -142,7 +148,8 @@ def allTeachers():
         a = []
         for i in db_sess.query(Teacher):
             a.append([i.id, i.surname, i.name])
-        return render_template("allTeachers.html", us=us, nameUs=nameUs, news=a)
+        return render_template("allTeachers.html", us=us, nameUs=nameUs,
+                               news=a)
     else:
         return redirect("/")
 
@@ -154,11 +161,13 @@ def allTeachersAdmin():
         us = coc.split(';')[1]
         nameUs = coc.split(';')[2]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(Admin.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
         a = []
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
             a.append([i.id, i.surname, i.name])
-        return render_template("allTeachersAdmin.html", us=us, nameUs=nameUs, news=a)
+        return render_template("allTeachersAdmin.html", us=us, nameUs=nameUs,
+                               news=a)
     else:
         return redirect("/")
 
@@ -174,7 +183,8 @@ def developer():
         for i in db_sess.query(Admin).all():
             a.append([i.id, i.surname, i.name, i.school])
 
-        return render_template("developer.html", news=a, us=us, nameUs=nameUs)
+        return render_template("developer.html", news=a, us=us, nameUs=nameUs,
+                               bg='img')
     else:
         return redirect("/")
 
@@ -184,14 +194,18 @@ def teacher():
     coc = request.cookies.get("coc", 0)
     if coc:
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(Teacher).filter(
+            Teacher.id == int(coc.split(';')[0])).first()
         nameUs = coc.split(';')[2]
         a = []
-        for i in db_sess.query(PredmetAndTeacher).filter(PredmetAndTeacher.idTeacher == userUs.id):
-            classs = db_sess.query(Classs).filter(Classs.id == i.idClass).first()
-            predmet = db_sess.query(Predmet).filter(Predmet.id == i.idPredmet).first()
+        for i in db_sess.query(PredmetAndTeacher).filter(
+                PredmetAndTeacher.idTeacher == userUs.id):
+            classs = db_sess.query(Classs).filter(
+                Classs.id == i.idClass).first()
+            predmet = db_sess.query(Predmet).filter(
+                Predmet.id == i.idPredmet).first()
             a.append([classs.id, classs.name, predmet.name, predmet.id])
-        return render_template("teacher.html", news=a, nameUs=nameUs)
+        return render_template("teacher.html", news=a, nameUs=nameUs, bg='img')
     else:
         return redirect("/")
 
@@ -201,14 +215,16 @@ def user():
     coc = request.cookies.get("coc", 0)
     if coc:
         db_sess = db_session.create_session()
-        userUs = db_sess.query(User).filter(User.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(User).filter(
+            User.id == int(coc.split(';')[0])).first()
         us = coc.split(';')[1]
         headings = ["Предмет", "Средний балл"]
         a = []
 
         mx = 0
         for i in db_sess.query(Predmet):
-            evalutions = db_sess.query(Evaluation).filter(Evaluation.idUser == userUs.id).filter(
+            evalutions = db_sess.query(Evaluation).filter(
+                Evaluation.idUser == userUs.id).filter(
                 Evaluation.idPredmet == i.id)
             p = 0
             for _ in evalutions:
@@ -223,7 +239,8 @@ def user():
 
         for i in db_sess.query(Predmet).order_by(Predmet.name):
             kk += 1
-            evalutions = db_sess.query(Evaluation).filter(Evaluation.idUser == userUs.id).filter(
+            evalutions = db_sess.query(Evaluation).filter(
+                Evaluation.idUser == userUs.id).filter(
                 Evaluation.idPredmet == i.id)
 
             b = ['' for i in range(len(headings))]
@@ -243,7 +260,8 @@ def user():
                 b[-1] = '-'
             a.append(b)
 
-        return render_template("user.html", headings=headings, data=a, us=us)
+        return render_template("user.html", headings=headings, data=a, us=us,
+                               bg='img')
     else:
         return redirect("/")
 
@@ -254,17 +272,22 @@ def predmet(id, pred):
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(Teacher).filter(
+            Teacher.id == int(coc.split(';')[0])).first()
         evalutions = db_sess.query(Evaluation).filter(
-            Evaluation.idUser == id).filter(Evaluation.idTeacher == userUs.id).filter(Evaluation.idPredmet == pred)
+            Evaluation.idUser == id).filter(
+            Evaluation.idTeacher == userUs.id).filter(
+            Evaluation.idPredmet == pred)
 
         a = []
         for i in evalutions:
             a.append([i.id, i.name, i.type])
 
         classs = db_sess.query(Classs).filter(
-            Classs.id == db_sess.query(User).filter(User.id == id).first().classId).first()
-        return render_template("predmet.html", news=a, userr=id, predmett=pred, us=us, classs=classs.id)
+            Classs.id == db_sess.query(User).filter(
+                User.id == id).first().classId).first()
+        return render_template("predmet.html", news=a, userr=id, predmett=pred,
+                               us=us, classs=classs.id)
     else:
         return redirect("/")
 
@@ -278,11 +301,13 @@ def teacher_class(id, pred):
         us = coc.split(';')[1]
         headings = ["№", "Ученик", "Средний балл", '']
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(Teacher).filter(
+            Teacher.id == int(coc.split(';')[0])).first()
         a = []
         for i in db_sess.query(User).filter(User.classId == id):
             evalutions = db_sess.query(Evaluation).filter(
-                Evaluation.idUser == i.id).filter(Evaluation.idTeacher == userUs.id).filter(
+                Evaluation.idUser == i.id).filter(
+                Evaluation.idTeacher == userUs.id).filter(
                 Evaluation.idPredmet == pred)
 
             for j in evalutions:
@@ -293,7 +318,8 @@ def teacher_class(id, pred):
         for i in db_sess.query(User).filter(User.classId == id):
             kk += 1
             evalutions = db_sess.query(Evaluation).filter(
-                Evaluation.idUser == i.id).filter(Evaluation.idTeacher == userUs.id).filter(
+                Evaluation.idUser == i.id).filter(
+                Evaluation.idTeacher == userUs.id).filter(
                 Evaluation.idPredmet == pred)
 
             b = ['' for i in range(len(headings))]
@@ -315,7 +341,8 @@ def teacher_class(id, pred):
             b[-1] = i.id
             a.append(b)
 
-        return render_template("teacher_class.html", headings=headings, data=a, us=us)
+        return render_template("teacher_class.html", headings=headings, data=a,
+                               us=us)
     else:
         return redirect("/")
 
@@ -327,17 +354,21 @@ def new_evaluation(id, pred):
         us = coc.split(';')[1]
         nameUs = coc.split(';')[2]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(Teacher).filter(
+            Teacher.id == int(coc.split(';')[0])).first()
         form = RegisterFormEvaluation()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             eva = db_sess.query(Evaluation).filter(
-                Evaluation.name == form.name.data).filter(Evaluation.idUser == id).filter(
+                Evaluation.name == form.name.data).filter(
+                Evaluation.idUser == id).filter(
                 Evaluation.idPredmet == pred).first()
             if eva:
-                return render_template('registerEvaluation.html', title='Новая оценка',
+                return render_template('registerEvaluation.html',
+                                       title='Новая оценка',
                                        form=form,
-                                       message="За такое событие оценка стоит!", us=us, nameUs=nameUs)
+                                       message="За такое событие оценка стоит!",
+                                       us=us, nameUs=nameUs)
 
             eva = Evaluation(
                 idUser=id,
@@ -351,9 +382,11 @@ def new_evaluation(id, pred):
             db_sess.commit()
 
             classs = db_sess.query(Classs).filter(
-                Classs.id == db_sess.query(User).filter(User.id == id).first().classId).first()
+                Classs.id == db_sess.query(User).filter(
+                    User.id == id).first().classId).first()
             return redirect(f'/teacher_class/{classs.id}/{pred}')
-        return render_template('registerEvaluation.html', title='Новая оценка', form=form, us=us, nameUs=nameUs)
+        return render_template('registerEvaluation.html', title='Новая оценка',
+                               form=form, us=us, nameUs=nameUs)
     return redirect('/')
 
 
@@ -368,7 +401,8 @@ def predmet_delete(id, userr):
     else:
         abort(404)
     classs = db_sess.query(Classs).filter(
-        Classs.id == db_sess.query(User).filter(User.id == userr).first().classId).first()
+        Classs.id == db_sess.query(User).filter(
+            User.id == userr).first().classId).first()
     return redirect(f'/teacher_class/{classs.id}/{pred}')
 
 
@@ -391,45 +425,58 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.login == form.login.data).first()
+        user = db_sess.query(User).filter(
+            User.login == form.login.data).first()
         if user:
             if user.check_password(form.password.data):
                 login_user(user, remember=form.remember_me.data)
                 res = make_response(redirect("/user"))
-                res.set_cookie('coc', str(user.id) + ';' + 'user' + ';' + str(user.name),
+                res.set_cookie('coc', str(user.id) + ';' + 'user' + ';' + str(
+                    user.name),
                                max_age=60 * 60 * 24 * 7)
                 return res
         else:
-            teacher = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
+            teacher = db_sess.query(Teacher).filter(
+                Teacher.login == form.login.data).first()
             if teacher:
                 if teacher.check_password(form.password.data):
                     login_user(teacher, remember=form.remember_me.data)
                     res = make_response(redirect("/teacher"))
-                    res.set_cookie('coc', str(teacher.id) + ';' + 'teacher' + ';' + str(teacher.name),
+                    res.set_cookie('coc',
+                                   str(teacher.id) + ';' + 'teacher' + ';' + str(
+                                       teacher.name),
                                    max_age=60 * 60 * 24 * 7)
                     return res
             else:
-                admin = db_sess.query(Admin).filter(Admin.login == form.login.data).first()
+                admin = db_sess.query(Admin).filter(
+                    Admin.login == form.login.data).first()
                 if admin:
                     if admin.check_password(form.password.data):
                         login_user(admin, remember=form.remember_me.data)
                         res = make_response(redirect("/admin"))
-                        res.set_cookie('coc', str(admin.id) + ';' + 'admin' + ';' + str(admin.name),
+                        res.set_cookie('coc',
+                                       str(admin.id) + ';' + 'admin' + ';' + str(
+                                           admin.name),
                                        max_age=60 * 60 * 24 * 7)
                         return res
                 else:
-                    developer = db_sess.query(Developer).filter(Developer.login == form.login.data).first()
+                    developer = db_sess.query(Developer).filter(
+                        Developer.login == form.login.data).first()
                     if developer:
                         if developer.check_password(form.password.data):
-                            login_user(developer, remember=form.remember_me.data)
+                            login_user(developer,
+                                       remember=form.remember_me.data)
                             res = make_response(redirect("/developer"))
-                            res.set_cookie('coc', str(developer.id) + ';' + 'developer' + ';' + str(developer.login),
+                            res.set_cookie('coc',
+                                           str(developer.id) + ';' + 'developer' + ';' + str(
+                                               developer.login),
                                            max_age=60 * 60 * 24 * 7)
                             return res
             return render_template('login.html',
                                    message="Неправильный логин или пароль",
                                    form=form, us="None", nameUs=nameUs)
-    return render_template('login.html', title='Авторизация', form=form, us=us, nameUs=nameUs)
+    return render_template('login.html', title='Авторизация', form=form, us=us,
+                           nameUs=nameUs)
 
 
 @app.route('/logout')
@@ -448,13 +495,18 @@ def register():
         nameUs = coc.split(';')[2]
         if form.validate_on_submit():
             db_sess = db_session.create_session()
-            if db_sess.query(User).filter(User.login == form.login.data).first() \
-                    or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
-                    or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
-                    or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
+            if db_sess.query(User).filter(
+                    User.login == form.login.data).first() \
+                    or db_sess.query(Teacher).filter(
+                Teacher.login == form.login.data).first() \
+                    or db_sess.query(Admin).filter(
+                Admin.login == form.login.data).first() \
+                    or db_sess.query(Developer).filter(
+                Developer.login == form.login.data).first():
                 return render_template('register.html', title='Новый ученик',
                                        form=form,
-                                       message="Такой логин уже есть", us=us, nameUs=nameUs)
+                                       message="Такой логин уже есть", us=us,
+                                       nameUs=nameUs)
             user = User(
                 name=form.name.data,
                 surname=form.surname.data,
@@ -466,7 +518,8 @@ def register():
             db_sess.add(user)
             db_sess.commit()
             return redirect(f'/allUsers')
-        return render_template('register.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
+        return render_template('register.html', title='Новый ученик',
+                               form=form, us=us, nameUs=nameUs)
     else:
         return redirect('/')
 
@@ -480,13 +533,19 @@ def new_admin():
         nameUs = coc.split(';')[2]
         if form.validate_on_submit():
             db_sess = db_session.create_session()
-            if db_sess.query(User).filter(User.login == form.login.data).first() \
-                    or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
-                    or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
-                    or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
-                return render_template('registerAdmin.html', title='Новый админ',
+            if db_sess.query(User).filter(
+                    User.login == form.login.data).first() \
+                    or db_sess.query(Teacher).filter(
+                Teacher.login == form.login.data).first() \
+                    or db_sess.query(Admin).filter(
+                Admin.login == form.login.data).first() \
+                    or db_sess.query(Developer).filter(
+                Developer.login == form.login.data).first():
+                return render_template('registerAdmin.html',
+                                       title='Новый админ',
                                        form=form,
-                                       message="Такой логин уже есть", us=us, nameUs=nameUs)
+                                       message="Такой логин уже есть", us=us,
+                                       nameUs=nameUs)
             admin = Admin(
                 surname=form.surname.data,
                 name=form.name.data,
@@ -498,7 +557,8 @@ def new_admin():
             db_sess.add(admin)
             db_sess.commit()
             return redirect('/developer')
-        return render_template('registerAdmin.html', title='Новый админ', form=form, us=us, nameUs=nameUs)
+        return render_template('registerAdmin.html', title='Новый админ',
+                               form=form, us=us, nameUs=nameUs)
     else:
         return redirect('/')
 
@@ -512,13 +572,19 @@ def new_teacher():
         form = RegisterFormTeacher()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
-            if db_sess.query(User).filter(User.login == form.login.data).first() \
-                    or db_sess.query(Teacher).filter(Teacher.login == form.login.data).first() \
-                    or db_sess.query(Admin).filter(Admin.login == form.login.data).first() \
-                    or db_sess.query(Developer).filter(Developer.login == form.login.data).first():
-                return render_template('registerTeacher.html', title='Новый учитель',
+            if db_sess.query(User).filter(
+                    User.login == form.login.data).first() \
+                    or db_sess.query(Teacher).filter(
+                Teacher.login == form.login.data).first() \
+                    or db_sess.query(Admin).filter(
+                Admin.login == form.login.data).first() \
+                    or db_sess.query(Developer).filter(
+                Developer.login == form.login.data).first():
+                return render_template('registerTeacher.html',
+                                       title='Новый учитель',
                                        form=form,
-                                       message="Такой логин уже есть", us=us, nameUs=nameUs)
+                                       message="Такой логин уже есть", us=us,
+                                       nameUs=nameUs)
             teacher = Teacher(
                 surname=form.surname.data,
                 name=form.name.data,
@@ -530,7 +596,8 @@ def new_teacher():
             db_sess.add(teacher)
             db_sess.commit()
             return redirect('/allTeachers')
-        return render_template('registerTeacher.html', title='Новый учитель', form=form, us=us, nameUs=nameUs)
+        return render_template('registerTeacher.html', title='Новый учитель',
+                               form=form, us=us, nameUs=nameUs)
     else:
         return redirect("/")
 
@@ -545,20 +612,26 @@ def new_user_admin():
         form = RegisterFormUserAdmin()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
-            user = db_sess.query(User).filter(User.login == form.login.data).first()
+            user = db_sess.query(User).filter(
+                User.login == form.login.data).first()
             if not user:
-                return render_template('registerUserAdmin.html', title='Новый ученик',
+                return render_template('registerUserAdmin.html',
+                                       title='Новый ученик',
                                        form=form,
-                                       message="Такого ученика не существует!", us=us, nameUs=nameUs)
+                                       message="Такого ученика не существует!",
+                                       us=us, nameUs=nameUs)
             if not (user.classId == 0 or user.classId == -1):
-                return render_template('registerUserAdmin.html', title='Новый ученик',
+                return render_template('registerUserAdmin.html',
+                                       title='Новый ученик',
                                        form=form,
-                                       message="Такой ученик учится в другой школе!", us=us, nameUs=nameUs)
+                                       message="Такой ученик учится в другой школе!",
+                                       us=us, nameUs=nameUs)
             user.adminId = int(coc.split(';')[0])
             user.classId = classsId
             db_sess.commit()
             return redirect(f'/classes/{classsId}')
-        return render_template('registerUserAdmin.html', title='Новый ученик', form=form, us=us, nameUs=nameUs)
+        return render_template('registerUserAdmin.html', title='Новый ученик',
+                               form=form, us=us, nameUs=nameUs)
     else:
         return redirect("/")
 
@@ -572,19 +645,26 @@ def new_teacher_admin():
         form = RegisterFormTeacherAdmin()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
-            teacher = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
+            teacher = db_sess.query(Teacher).filter(
+                Teacher.login == form.login.data).first()
             if not teacher:
-                return render_template('registerTeacherAdmin.html', title='Новый учитель',
+                return render_template('registerTeacherAdmin.html',
+                                       title='Новый учитель',
                                        form=form,
-                                       message="Такого учителя не существует!", us=us, nameUs=nameUs)
+                                       message="Такого учителя не существует!",
+                                       us=us, nameUs=nameUs)
             if teacher.adminId != -1:
-                return render_template('registerTeacherAdmin.html', title='Новый учитель',
+                return render_template('registerTeacherAdmin.html',
+                                       title='Новый учитель',
                                        form=form,
-                                       message="Такой учитель работает в другой школе!", us=us, nameUs=nameUs)
+                                       message="Такой учитель работает в другой школе!",
+                                       us=us, nameUs=nameUs)
             teacher.adminId = int(coc.split(';')[0])
             db_sess.commit()
             return redirect('/allTeachersAdmin')
-        return render_template('registerTeacherAdmin.html', title='Новый учитель', form=form, us=us, nameUs=nameUs)
+        return render_template('registerTeacherAdmin.html',
+                               title='Новый учитель', form=form, us=us,
+                               nameUs=nameUs)
     else:
         return redirect("/")
 
@@ -605,7 +685,8 @@ def new_class():
             db_sess.add(classs)
             db_sess.commit()
             return redirect('/admin')
-        return render_template('registerClass.html', title='Новый класс', form=form, us=us, nameUs=nameUs)
+        return render_template('registerClass.html', title='Новый класс',
+                               form=form, us=us, nameUs=nameUs)
     else:
         return redirect("/")
 
@@ -742,25 +823,34 @@ def new_teacherAdmin(id):
         us = coc.split(';')[1]
         nameUs = coc.split(';')[2]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Teacher).filter(Teacher.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(Teacher).filter(
+            Teacher.id == int(coc.split(';')[0])).first()
         form = RegisterFormTeacherClass()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
-            classs = db_sess.query(Classs).filter(Classs.name == form.login.data).first()
+            classs = db_sess.query(Classs).filter(
+                Classs.name == form.login.data).first()
             teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
             if not classs:
-                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                return render_template('registerTeacherClass.html',
+                                       title='Подключение учителя',
                                        form=form,
-                                       message="Такого класса в школе нет!", us=us, nameUs=nameUs)
+                                       message="Такого класса в школе нет!",
+                                       us=us, nameUs=nameUs)
             if classs.adminId != userUs.id:
-                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                return render_template('registerTeacherClass.html',
+                                       title='Подключение учителя',
                                        form=form,
-                                       message="Такого класса нет в школе!", us=us, nameUs=nameUs)
-            predmet = db_sess.query(Predmet).filter(Predmet.id == form.predmet.data).first()
+                                       message="Такого класса нет в школе!",
+                                       us=us, nameUs=nameUs)
+            predmet = db_sess.query(Predmet).filter(
+                Predmet.id == form.predmet.data).first()
             if not predmet:
-                return render_template('registerTeacherClass.html', title='Подключение учителя',
+                return render_template('registerTeacherClass.html',
+                                       title='Подключение учителя',
                                        form=form,
-                                       message="Такого предмета нет!", us=us, nameUs=nameUs)
+                                       message="Такого предмета нет!", us=us,
+                                       nameUs=nameUs)
 
             db_sess = db_session.create_session()
             predmetAndTeacher = PredmetAndTeacher(
@@ -771,7 +861,8 @@ def new_teacherAdmin(id):
             db_sess.add(predmetAndTeacher)
             db_sess.commit()
             return redirect('/allTeachersAdmin')
-        return render_template('registerTeacherClass.html', title='Подключение учителя', form=form, us=us,
+        return render_template('registerTeacherClass.html',
+                               title='Подключение учителя', form=form, us=us,
                                nameUs=nameUs)
     return redirect('/')
 
@@ -826,14 +917,17 @@ def sample_file_upload():
         elif request.method == 'POST':
             try:
                 db_sess = db_session.create_session()
-                tem = Tems(
-                    name=str(request.files['file'].readline())[2:-1].replace("\\r", "").replace("\\n", ""),
-                    text=str(request.files['file'].read())[2:-1].replace("\\r", "")
-                )
+                file_content = request.files['file'].read().decode(
+                    'utf-8')  # Прочитать содержимое файла как строку
+                lines = file_content.splitlines()  # Разделить содержимое на строки
+                name = lines[0]  # Первая строка - название
+                text = '\n'.join(lines[1:])  # Остальные строки - текст
+                tem = Tems(name=name, text=text)
                 db_sess.add(tem)
                 db_sess.commit()
-            except:
-                pass
+            except Exception as e:
+                print(
+                    f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}")
             return redirect('/allTems')
 
     return redirect('/')
