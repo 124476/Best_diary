@@ -8,40 +8,23 @@
 
 {% block content %}
 {% if us == "admin" %}
-    <a href="newClass" class="btn btn-secondary">Добавить класс</a>
+    <a href="newClass" class="btn btn-primary">Добавить класс</a>
 {% endif %}
 {% for item in news%}
-<p>
-
-
-</p>
-<div class="col-md6 border rounded">
-    <p>
-
-    </p>
-    <h2>{{item[1]}}</h2>
-    <div>
-        <p>
-
-        </p>
+<div class="bg-secondary" style="margin: 20px;border-radius: 5px;border-style: solid;border-color: white;">
+    <h2 class="col-6 mb-3">{{item[1]}}</h2>
+    <div class="col-6 mb-3">
         <a href="/classes/{{ item[0] }}" class="btn btn-warning">
             Изменить
         </a>
         <a href="/class_delete/{{ item[0] }}" class="btn btn-danger">
             Удалить
         </a>
-        <p>
-
-        </p>
     </div>
 </div>
 {% endfor %}
-
-<p>
-
-</p>
 {% if us == "admin" %}
-    <a href="allTeachersAdmin" class="btn btn-secondary">Учителя</a>
+    <a href="allTeachersAdmin" class="btn btn-primary">Учителя</a>
 {% endif %}
 {% endblock %}
 </body>

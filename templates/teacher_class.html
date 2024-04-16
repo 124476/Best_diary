@@ -30,12 +30,12 @@
     {% endfor %}
 </table>
 {% if us == "teacher" %}
-    <a href="/registerHomeWork/{{ pred }}/{{ clas }}" class="btn btn-secondary">Домашняя работа</a>
+    <a href="/registerHomeWork/{{ pred }}/{{ clas }}" class="btn btn-primary">Домашняя работа</a>
     {% for item2 in textDz%}
-    <p class="col-6">{{item2}}</p>
+    <p class="col-6" style="margin: 10px;">{{item2}}</p>
     {% endfor %}
 
-    <a href="/teacher" class="btn btn-secondary">Назад</a>
+    <a href="/teacher" class="btn btn-danger">Назад</a>
 {% endif %}
 {% endblock %}
 </body>

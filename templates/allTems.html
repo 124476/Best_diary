@@ -8,27 +8,14 @@
 
 {% block content %}
 {% if us == "developer" %}
-<a href="/uplode" class="btn btn-secondary">Добавить новость</a>
+<a href="/uplode" class="btn btn-primary">Добавить новость</a>
 {% for item in news%}
-<p>
-
-
-</p>
-<div class="col-md6 border rounded">
-    <p>
-
-    </p>
-    <h2>{{item[0]}}</h2>
-    <div>
-        <p>
-
-        </p>
+<div class="bg-secondary" style="margin: 20px;border-radius: 5px;border-style: solid;border-color: white;">
+    <h2  class="col-100 mb-3">{{item[0]}}</h2>
+    <div class="col-6 mb-3">
         <a href="/tems_delete/{{item[2]}}" class="btn btn-danger">
             Удалить
         </a>
-        <p>
-
-        </p>
     </div>
 </div>
 {% endfor %}
@@ -36,7 +23,7 @@
 
 </p>
 <a href="/developer" class="btn btn-danger">
-    Выйти
+    Назад
 </a>
 {% endif %}
 {% endblock %}

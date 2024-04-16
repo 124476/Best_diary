@@ -113,7 +113,7 @@ def allUsers():
             a.append([i.id, i.surname, i.name])
         return render_template('allUsers.html',
                                title='Ученики',
-                               news=a, us=us, nameUs=nameUs)
+                               news=a, us=us, nameUs=nameUs, bg='img')
     else:
         return redirect("/")
 
@@ -190,7 +190,7 @@ def classes(id):
             a.append([i.id, i.surname, i.name])
 
         res = make_response(
-            render_template("classes.html", us=us, nameUs=nameUs, news=a))
+            render_template("classes.html", us=us, nameUs=nameUs, news=a, bg='img'))
         res.set_cookie('coc',
                        coc.split(';')[0] + ';' + coc.split(';')[1] + ';' +
                        coc.split(';')[2] + ';' + str(id),
@@ -211,7 +211,7 @@ def allTeachers():
         for i in db_sess.query(Teacher):
             a.append([i.id, i.surname, i.name])
         return render_template("allTeachers.html", us=us, nameUs=nameUs,
-                               news=a)
+                               news=a, bg='img')
     else:
         return redirect("/")
 
@@ -229,7 +229,7 @@ def allTeachersAdmin():
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
             a.append([i.id, i.surname, i.name])
         return render_template("allTeachersAdmin.html", us=us, nameUs=nameUs,
-                               news=a)
+                               news=a, bg='img')
     else:
         return redirect("/")
 
@@ -1007,7 +1007,7 @@ def all_tems():
         a = []
         for i in db_sess.query(Tems):
             a.append([i.name, i.text.split('\\n'), i.id])
-        return render_template(f'allTems.html', us="developer", news=a)
+        return render_template(f'allTems.html', us="developer", news=a, bg='img')
     return redirect('/')
 
 
