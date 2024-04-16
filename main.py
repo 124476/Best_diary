@@ -168,6 +168,8 @@ def homeWork(predmetName):
         for i in db_sess.query(HomeWork).filter(HomeWork.predmetId == pred) \
                 .filter(HomeWork.classId == db_sess.query(User).filter(User.id == userId)[0].classId):
             a.append([db_sess.query(Predmet).filter(Predmet.id == pred)[0].name, i.textDz.split('\n')])
+        if not a:
+            a = [[db_sess.query(Predmet).filter(Predmet.id == pred)[0].name, ['Ничего не задали']]]
 
         res = make_response(
             render_template("homeWork.html", us=us, nameUs=nameUs, news=a))
