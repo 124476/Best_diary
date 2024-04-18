@@ -87,8 +87,8 @@ def admin():
         db_sess = db_session.create_session()
         userUs = db_sess.query(Admin).filter(
             Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
         a = []
         for i in db_sess.query(Classs).filter(Classs.adminId == userUs.id):
             a.append([i.id, i.name])
@@ -106,7 +106,10 @@ def allUsers():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         a = []
         for i in db_sess.query(User):
@@ -123,7 +126,10 @@ def registerHomeWork(pred, clas):
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         userUs = db_sess.query(Teacher).filter(
             Teacher.id == int(coc.split(';')[0])).first()
@@ -158,7 +164,10 @@ def homeWork(predmetName):
     if coc:
         userId = int(coc.split(';')[0])
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         a = []
         d = db_sess.query(Predmet)
@@ -183,7 +192,10 @@ def classes(id):
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         a = []
         for i in db_sess.query(User).filter(User.classId == id):
@@ -205,7 +217,10 @@ def allTeachers():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         a = []
         for i in db_sess.query(Teacher):
@@ -221,7 +236,10 @@ def allTeachersAdmin():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         userUs = db_sess.query(Admin).filter(
             Admin.id == int(coc.split(';')[0])).first()
@@ -240,7 +258,10 @@ def developer():
     if coc:
         db_sess = db_session.create_session()
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         a = []
         for i in db_sess.query(Admin).all():
             a.append([i.id, i.surname, i.name, i.school])
@@ -258,7 +279,10 @@ def teacher():
         db_sess = db_session.create_session()
         userUs = db_sess.query(Teacher).filter(
             Teacher.id == int(coc.split(';')[0])).first()
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         a = []
         for i in db_sess.query(PredmetAndTeacher).filter(
                 PredmetAndTeacher.idTeacher == userUs.id):
@@ -404,8 +428,11 @@ def teacher_class(id, pred):
                 b[-2] = '-'
             b[-1] = i.id
             a.append(b)
-        textDz = db_sess.query(HomeWork).filter(HomeWork.classId == id).filter(HomeWork.teacherId == userUs.id).filter(
-            HomeWork.predmetId == pred).first().textDz
+        dz = db_sess.query(HomeWork).filter(HomeWork.classId == id).filter(HomeWork.teacherId == userUs.id).filter(HomeWork.predmetId == pred).first()
+        if dz:
+            textDz = dz.textDz
+        else:
+            textDz = ""
 
         return render_template("teacher_class.html", headings=headings, data=a,
                                us=us, pred=pred, clas=id, textDz=textDz.split('\n'))
@@ -418,7 +445,10 @@ def new_evaluation(id, pred):
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         userUs = db_sess.query(Teacher).filter(
             Teacher.id == int(coc.split(';')[0])).first()
@@ -483,7 +513,10 @@ def login():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
     else:
         us = 'None'
         nameUs = 'None'
@@ -558,7 +591,10 @@ def register():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             if db_sess.query(User).filter(
@@ -596,7 +632,10 @@ def new_admin():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             if db_sess.query(User).filter(
@@ -634,7 +673,10 @@ def new_teacher():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         form = RegisterFormTeacher()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -673,7 +715,10 @@ def new_user_admin():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         classsId = int(coc.split(';')[3])
         form = RegisterFormUserAdmin()
         if form.validate_on_submit():
@@ -707,7 +752,10 @@ def new_teacher_admin():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         form = RegisterFormTeacherAdmin()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -740,7 +788,10 @@ def new_class():
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         form = RegisterFormClass()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -762,7 +813,10 @@ def edit_teacher(id):
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         form = RegisterFormTeacher()
         if request.method == "GET":
             db_sess = db_session.create_session()
@@ -799,7 +853,10 @@ def edit_user(id):
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         form = RegisterForm()
         if request.method == "GET":
             db_sess = db_session.create_session()
@@ -836,7 +893,10 @@ def edit_admin(id):
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         form = RegisterFormAdmin()
         if request.method == "GET":
             db_sess = db_session.create_session()
@@ -887,7 +947,10 @@ def new_teacherAdmin(id):
     coc = request.cookies.get("coc", 0)
     if coc:
         us = coc.split(';')[1]
-        nameUs = coc.split(';')[2]
+        db_sess = db_session.create_session()
+        userUs = db_sess.query(Admin).filter(
+            Admin.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         userUs = db_sess.query(Teacher).filter(
             Teacher.id == int(coc.split(';')[0])).first()
