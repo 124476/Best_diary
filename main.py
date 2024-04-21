@@ -1,27 +1,26 @@
-import os
-from base64 import encode, decode
 from os import abort
+from string import ascii_letters, digits
 
 from flask import Flask, render_template, redirect, make_response, request
+from flask_login import LoginManager, login_user
 from flask_restful import abort, Api
 
-from cryptography.fernet import Fernet
 import teachers_api
+import teachers_resource
 import tems_api
 import user_api
 import users_resource
-import teachers_resource
 from data import db_session
 from data.admins import Admin
-from data.developers import Developer
-from data.homeWork import HomeWork
-from data.tems import Tems
-from data.evaluations import Evaluation
-from data.teachers import Teacher
-from data.users import User
 from data.classes import Classs
+from data.developers import Developer
+from data.evaluations import Evaluation
+from data.homeWork import HomeWork
 from data.predmet import Predmet
 from data.predmetAndTeacher import PredmetAndTeacher
+from data.teachers import Teacher
+from data.tems import Tems
+from data.users import User
 from forms.admin import RegisterFormAdmin
 from forms.classs import RegisterFormClass
 from forms.homeWork import RegisterFormHomeWork
@@ -32,17 +31,15 @@ from forms.teacher import RegisterFormTeacher
 from forms.teacherAdmin import RegisterFormTeacherAdmin
 from forms.teacherClass import RegisterFormTeacherClass
 from forms.user import RegisterForm, LoginForm
-from flask_login import LoginManager, login_user
 
-from string import ascii_letters, digits
-
-alphabet_list = ascii_letters + digits
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 from forms.userAdmin import RegisterFormUserAdmin
 
+
+alphabet_list = ascii_letters + digits
 app = Flask(__name__)
 api = Api(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
