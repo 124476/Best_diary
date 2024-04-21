@@ -1,9 +1,11 @@
 import os
+from base64 import encode, decode
 from os import abort
 
 from flask import Flask, render_template, redirect, make_response, request
 from flask_restful import abort, Api
 
+from cryptography.fernet import Fernet
 import teachers_api
 import tems_api
 import user_api
@@ -23,12 +25,21 @@ from data.predmetAndTeacher import PredmetAndTeacher
 from forms.admin import RegisterFormAdmin
 from forms.classs import RegisterFormClass
 from forms.homeWork import RegisterFormHomeWork
+from forms.loginBack import LoginLoginBack
+from forms.passwordBack import LoginPasswordBack
 from forms.predmet import RegisterFormEvaluation
 from forms.teacher import RegisterFormTeacher
 from forms.teacherAdmin import RegisterFormTeacherAdmin
 from forms.teacherClass import RegisterFormTeacherClass
 from forms.user import RegisterForm, LoginForm
 from flask_login import LoginManager, login_user
+
+from string import ascii_letters, digits
+
+alphabet_list = ascii_letters + digits
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from forms.userAdmin import RegisterFormUserAdmin
 
@@ -53,10 +64,6 @@ api.add_resource(teachers_resource.TeachersResource,
 app.register_blueprint(user_api.blueprint)
 app.register_blueprint(teachers_api.blueprint)
 app.register_blueprint(tems_api.blueprint)
-
-
-def main():
-    app.run()
 
 
 @app.route("/")
@@ -428,7 +435,8 @@ def teacher_class(id, pred):
                 b[-2] = '-'
             b[-1] = i.id
             a.append(b)
-        dz = db_sess.query(HomeWork).filter(HomeWork.classId == id).filter(HomeWork.teacherId == userUs.id).filter(HomeWork.predmetId == pred).first()
+        dz = db_sess.query(HomeWork).filter(HomeWork.classId == id).filter(HomeWork.teacherId == userUs.id).filter(
+            HomeWork.predmetId == pred).first()
         if dz:
             textDz = dz.textDz
         else:
@@ -510,17 +518,6 @@ def load_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    coc = request.cookies.get("coc", 0)
-    if coc:
-        us = coc.split(';')[1]
-        db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
-    else:
-        us = 'None'
-        nameUs = 'None'
-
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -573,9 +570,114 @@ def login():
                             return res
             return render_template('login.html',
                                    message="Неправильный логин или пароль",
-                                   form=form, us="None", nameUs=nameUs)
-    return render_template('login.html', title='Авторизация', form=form, us=us,
-                           nameUs=nameUs)
+                                   form=form, us="None")
+    return render_template('login.html', title='Авторизация', form=form)
+
+
+def send_email(emailOther, text):
+    # Заполните эти поля вашими данными
+    sender_email = "bestdiaryrussian@gmail.com"  # gmail почта, к которой привязан пароль приложения
+    receiver_email = emailOther  # кому
+    password = "scnx oqpv qwxh ipwx"  # пароль приложения (в gmail получил в разделе безопасность - пароль приложений)
+    subject = "Восстановление пароля"
+    body = text  # текст сообщения
+
+    # Создание объекта сообщения
+    message = MIMEMultipart()
+    message['From'] = sender_email
+    message['To'] = receiver_email
+    message['Subject'] = subject
+
+    # Добавление тела письма
+    message.attach(MIMEText(body, 'plain'))
+
+    # Создание объекта сессии SMTP
+    session = smtplib.SMTP('smtp.gmail.com', 587)  # Укажите здесь свой SMTP сервер
+    session.starttls()  # Активация шифрования
+    session.login(sender_email, password)  # Авторизация на сервере
+
+    # Отправка сообщения
+    session.sendmail(sender_email, receiver_email, message.as_string())
+    session.quit()
+
+
+def caesar_code(text, shift):
+    shift_text = ''
+
+    for c in text:
+        if c not in alphabet_list:
+            shift_text += c
+            continue
+
+        i = (alphabet_list.index(c) + shift) % len(alphabet_list)
+        shift_text += alphabet_list[i]
+
+    return shift_text
+
+
+@app.route('/password', methods=['GET', 'POST'])
+def passwordBack():
+    form = LoginPasswordBack()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(
+            User.login == form.login.data).first()
+        if user:
+            txt = str(user.id) + ";;;" + "user"
+            encoded = caesar_code(txt, shift=125)
+
+            send_email(user.email, "Для восстановления доступа перейдите по ссылке: \n "
+                                   "http://127.00.1:5000/returnPassword/" + str(encoded))
+            return redirect("/passwordTest")
+        else:
+            teacher = db_sess.query(Teacher).filter(
+                Teacher.login == form.login.data).first()
+            if teacher:
+                txt = str(teacher.id) + ";;;" + "teacher"
+                encoded = caesar_code(txt, shift=13)
+
+                send_email(teacher.email, "Для восстановления доступа перейдите по ссылке: \n "
+                                          "http://127.00.1:5000/returnPassword/" + str(encoded))
+                return redirect("/passwordTest")
+            else:
+                admin = db_sess.query(Admin).filter(
+                    Admin.login == form.login.data).first()
+                if admin:
+                    txt = str(admin.id) + ";;;" + "admin"
+                    encoded = caesar_code(txt, shift=13)
+
+                    send_email(admin.email, "Для восстановления доступа перейдите по ссылке: \n "
+                                            "http://127.00.1:5000/returnPassword/" + str(encoded))
+                    return redirect("/passwordTest")
+            return render_template('password.html',
+                                   message="Неправильный логин", form=form)
+    return render_template('password.html', title='Восстановление пароля', form=form)
+
+
+@app.route('/passwordTest')
+def passwordTest():
+    return render_template('passwordTest.html', title='Восстановление пароля')
+
+
+@app.route('/returnPassword/<string:text>', methods=['GET', 'POST'])
+def returnPassword(text):
+    db_sess = db_session.create_session()
+    decoded = caesar_code(text, shift=-13)
+    form = LoginLoginBack()
+    if form.validate_on_submit():
+        userId, userUs = decoded.split(';;;')
+        if userUs == "user":
+            user = db_sess.query(User).get(userId)
+        elif userUs == "teacher":
+            user = db_sess.query(Teacher).get(userId)
+        elif userUs == "admin":
+            user = db_sess.query(Admin).get(userId)
+        else:
+            return redirect("/")
+        user.set_password(form.password.data)
+        db_sess.commit()
+        return redirect('/login')
+    return render_template('returnPassword.html', title='Восстановление пароля', form=form)
 
 
 @app.route('/logout')
@@ -1111,5 +1213,4 @@ def admin_delete(id):
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run()
