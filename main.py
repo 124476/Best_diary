@@ -1,11 +1,8 @@
-import os
-from base64 import encode, decode
 from os import abort
 
 from flask import Flask, render_template, redirect, make_response, request
 from flask_restful import abort, Api
 
-from cryptography.fernet import Fernet
 import teachers_api
 import tems_api
 import user_api
@@ -33,16 +30,15 @@ from forms.teacherAdmin import RegisterFormTeacherAdmin
 from forms.teacherClass import RegisterFormTeacherClass
 from forms.user import RegisterForm, LoginForm
 from flask_login import LoginManager, login_user
-
 from string import ascii_letters, digits
 
-alphabet_list = ascii_letters + digits
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 from forms.userAdmin import RegisterFormUserAdmin
 
+alphabet_list = ascii_letters + digits
 app = Flask(__name__)
 api = Api(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -165,7 +161,8 @@ def registerHomeWork(pred, clas):
             db_sess.close()
             return redirect(f'/teacher')
         db_sess.close()
-        return render_template('registerHomeWork.html', title='Домашняя работа',
+        return render_template('registerHomeWork.html',
+                               title='Домашняя работа',
                                form=form, us=us, nameUs=nameUs)
     return redirect('/')
 

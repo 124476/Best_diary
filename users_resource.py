@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, make_response, request, jsonify
+from flask import Flask, jsonify
 from flask_restful import reqparse, abort, Api, Resource
 
 from data import db_session
