@@ -1,26 +1,27 @@
+import os
+from base64 import encode, decode
 from os import abort
-from string import ascii_letters, digits
 
 from flask import Flask, render_template, redirect, make_response, request
-from flask_login import LoginManager, login_user
 from flask_restful import abort, Api
 
+from cryptography.fernet import Fernet
 import teachers_api
-import teachers_resource
 import tems_api
 import user_api
 import users_resource
+import teachers_resource
 from data import db_session
 from data.admins import Admin
-from data.classes import Classs
 from data.developers import Developer
-from data.evaluations import Evaluation
 from data.homeWork import HomeWork
+from data.tems import Tems
+from data.evaluations import Evaluation
+from data.teachers import Teacher
+from data.users import User
+from data.classes import Classs
 from data.predmet import Predmet
 from data.predmetAndTeacher import PredmetAndTeacher
-from data.teachers import Teacher
-from data.tems import Tems
-from data.users import User
 from forms.admin import RegisterFormAdmin
 from forms.classs import RegisterFormClass
 from forms.homeWork import RegisterFormHomeWork
@@ -31,15 +32,17 @@ from forms.teacher import RegisterFormTeacher
 from forms.teacherAdmin import RegisterFormTeacherAdmin
 from forms.teacherClass import RegisterFormTeacherClass
 from forms.user import RegisterForm, LoginForm
+from flask_login import LoginManager, login_user
 
+from string import ascii_letters, digits
+
+alphabet_list = ascii_letters + digits
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 from forms.userAdmin import RegisterFormUserAdmin
 
-
-alphabet_list = ascii_letters + digits
 app = Flask(__name__)
 api = Api(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -81,6 +84,7 @@ def index():
     a = []
     for i in db_sess.query(Tems):
         a.append([i.name, i.text.split('\\n')])
+    db_sess.close()
     return render_template("index.html", us="None", listTems=a, bg='img')
 
 
@@ -99,6 +103,7 @@ def admin():
         b = []
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
             b.append([i.id, i.name, i.surname])
+        db_sess.close()
         return render_template("admin.html", us=us, nameUs=nameUs, news=a,
                                newss=b, bg='img')
     else:
@@ -118,6 +123,7 @@ def allUsers():
         a = []
         for i in db_sess.query(User):
             a.append([i.id, i.surname, i.name])
+        db_sess.close()
         return render_template('allUsers.html',
                                title='Ученики',
                                news=a, us=us, nameUs=nameUs, bg='img')
@@ -156,7 +162,9 @@ def registerHomeWork(pred, clas):
 
             db_sess.add(homeWork)
             db_sess.commit()
+            db_sess.close()
             return redirect(f'/teacher')
+        db_sess.close()
         return render_template('registerHomeWork.html', title='Домашняя работа',
                                form=form, us=us, nameUs=nameUs)
     return redirect('/')
@@ -186,6 +194,7 @@ def homeWork(predmetName):
 
         res = make_response(
             render_template("homeWork.html", us=us, nameUs=nameUs, news=a))
+        db_sess.close()
         return res
     else:
         return redirect('/')
@@ -205,6 +214,7 @@ def classes(id):
         for i in db_sess.query(User).filter(User.classId == id):
             a.append([i.id, i.surname, i.name])
 
+        db_sess.close()
         res = make_response(
             render_template("classes.html", us=us, nameUs=nameUs, news=a, bg='img'))
         res.set_cookie('coc',
@@ -229,6 +239,7 @@ def allTeachers():
         a = []
         for i in db_sess.query(Teacher):
             a.append([i.id, i.surname, i.name])
+        db_sess.close()
         return render_template("allTeachers.html", us=us, nameUs=nameUs,
                                news=a, bg='img')
     else:
@@ -250,6 +261,7 @@ def allTeachersAdmin():
         a = []
         for i in db_sess.query(Teacher).filter(Teacher.adminId == userUs.id):
             a.append([i.id, i.surname, i.name])
+        db_sess.close()
         return render_template("allTeachersAdmin.html", us=us, nameUs=nameUs,
                                news=a, bg='img')
     else:
@@ -260,7 +272,6 @@ def allTeachersAdmin():
 def developer():
     coc = request.cookies.get("coc", 0)
     if coc:
-        db_sess = db_session.create_session()
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
         userUs = db_sess.query(Admin).filter(
@@ -270,6 +281,7 @@ def developer():
         for i in db_sess.query(Admin).all():
             a.append([i.id, i.surname, i.name, i.school])
 
+        db_sess.close()
         return render_template("developer.html", news=a, us=us, nameUs=nameUs,
                                bg='img')
     else:
@@ -280,9 +292,6 @@ def developer():
 def teacher():
     coc = request.cookies.get("coc", 0)
     if coc:
-        db_sess = db_session.create_session()
-        userUs = db_sess.query(Teacher).filter(
-            Teacher.id == int(coc.split(';')[0])).first()
         db_sess = db_session.create_session()
         userUs = db_sess.query(Admin).filter(
             Admin.id == int(coc.split(';')[0])).first()
@@ -295,6 +304,7 @@ def teacher():
             predmet = db_sess.query(Predmet).filter(
                 Predmet.id == i.idPredmet).first()
             a.append([classs.id, classs.name, predmet.name, predmet.id])
+        db_sess.close()
         return render_template("teacher.html", news=a, nameUs=nameUs, bg='img')
     else:
         return redirect("/")
@@ -352,6 +362,7 @@ def user():
                 b[-1] = '-'
             a.append(b)
 
+        db_sess.close()
         return render_template("user.html", headings=headings, data=a, us=us,
                                bg='img')
     else:
@@ -378,6 +389,7 @@ def predmet(id, pred):
         classs = db_sess.query(Classs).filter(
             Classs.id == db_sess.query(User).filter(
                 User.id == id).first().classId).first()
+        db_sess.close()
         return render_template("predmet.html", news=a, userr=id, predmett=pred,
                                us=us, classs=classs.id)
     else:
@@ -439,6 +451,7 @@ def teacher_class(id, pred):
         else:
             textDz = ""
 
+        db_sess.close()
         return render_template("teacher_class.html", headings=headings, data=a,
                                us=us, pred=pred, clas=id, textDz=textDz.split('\n'))
     else:
@@ -465,6 +478,7 @@ def new_evaluation(id, pred):
                 Evaluation.idUser == id).filter(
                 Evaluation.idPredmet == pred).first()
             if eva:
+                db_sess.close()
                 return render_template('registerEvaluation.html',
                                        title='Новая оценка',
                                        form=form,
@@ -485,7 +499,9 @@ def new_evaluation(id, pred):
             classs = db_sess.query(Classs).filter(
                 Classs.id == db_sess.query(User).filter(
                     User.id == id).first().classId).first()
+            db_sess.close()
             return redirect(f'/teacher_class/{classs.id}/{pred}')
+        db_sess.close()
         return render_template('registerEvaluation.html', title='Новая оценка',
                                form=form, us=us, nameUs=nameUs)
     return redirect('/')
@@ -504,13 +520,16 @@ def predmet_delete(id, userr):
     classs = db_sess.query(Classs).filter(
         Classs.id == db_sess.query(User).filter(
             User.id == userr).first().classId).first()
+    db_sess.close()
     return redirect(f'/teacher_class/{classs.id}/{pred}')
 
 
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
+    id = db_sess.query(User).get(user_id)
+    db_sess.close()
+    return id
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -527,6 +546,7 @@ def login():
                 res.set_cookie('coc', str(user.id) + ';' + 'user' + ';' + str(
                     user.name),
                                max_age=60 * 60 * 24 * 7)
+                db_sess.close()
                 return res
         else:
             teacher = db_sess.query(Teacher).filter(
@@ -539,6 +559,7 @@ def login():
                                    str(teacher.id) + ';' + 'teacher' + ';' + str(
                                        teacher.name),
                                    max_age=60 * 60 * 24 * 7)
+                    db_sess.close()
                     return res
             else:
                 admin = db_sess.query(Admin).filter(
@@ -551,6 +572,7 @@ def login():
                                        str(admin.id) + ';' + 'admin' + ';' + str(
                                            admin.name),
                                        max_age=60 * 60 * 24 * 7)
+                        db_sess.close()
                         return res
                 else:
                     developer = db_sess.query(Developer).filter(
@@ -564,7 +586,9 @@ def login():
                                            str(developer.id) + ';' + 'developer' + ';' + str(
                                                developer.login),
                                            max_age=60 * 60 * 24 * 7)
+                            db_sess.close()
                             return res
+            db_sess.close()
             return render_template('login.html',
                                    message="Неправильный логин или пароль",
                                    form=form, us="None")
@@ -625,6 +649,7 @@ def passwordBack():
 
             send_email(user.email, "Для восстановления доступа перейдите по ссылке: \n "
                                    "http://127.00.1:5000/returnPassword/" + str(encoded))
+            db_sess.close()
             return redirect("/passwordTest")
         else:
             teacher = db_sess.query(Teacher).filter(
@@ -635,6 +660,7 @@ def passwordBack():
 
                 send_email(teacher.email, "Для восстановления доступа перейдите по ссылке: \n "
                                           "http://127.00.1:5000/returnPassword/" + str(encoded))
+                db_sess.close()
                 return redirect("/passwordTest")
             else:
                 admin = db_sess.query(Admin).filter(
@@ -645,7 +671,9 @@ def passwordBack():
 
                     send_email(admin.email, "Для восстановления доступа перейдите по ссылке: \n "
                                             "http://127.00.1:5000/returnPassword/" + str(encoded))
+                    db_sess.close()
                     return redirect("/passwordTest")
+            db_sess.close()
             return render_template('password.html',
                                    message="Неправильный логин", form=form)
     return render_template('password.html', title='Восстановление пароля', form=form)
@@ -673,7 +701,9 @@ def returnPassword(text):
             return redirect("/")
         user.set_password(form.password.data)
         db_sess.commit()
+        db_sess.close()
         return redirect('/login')
+    db_sess.close()
     return render_template('returnPassword.html', title='Восстановление пароля', form=form)
 
 
@@ -718,7 +748,9 @@ def register():
             user.set_password(form.password.data)
             db_sess.add(user)
             db_sess.commit()
+            db_sess.close()
             return redirect(f'/allUsers')
+        db_sess.close()
         return render_template('register.html', title='Новый ученик',
                                form=form, us=us, nameUs=nameUs)
     else:
@@ -745,6 +777,7 @@ def new_admin():
                 Admin.login == form.login.data).first() \
                     or db_sess.query(Developer).filter(
                 Developer.login == form.login.data).first():
+                db_sess.close()
                 return render_template('registerAdmin.html',
                                        title='Новый админ',
                                        form=form,
@@ -760,7 +793,9 @@ def new_admin():
             admin.set_password(form.password.data)
             db_sess.add(admin)
             db_sess.commit()
+            db_sess.close()
             return redirect('/developer')
+        db_sess.close()
         return render_template('registerAdmin.html', title='Новый админ',
                                form=form, us=us, nameUs=nameUs)
     else:
@@ -802,7 +837,9 @@ def new_teacher():
             teacher.set_password(form.password.data)
             db_sess.add(teacher)
             db_sess.commit()
+            db_sess.close()
             return redirect('/allTeachers')
+        db_sess.close()
         return render_template('registerTeacher.html', title='Новый учитель',
                                form=form, us=us, nameUs=nameUs)
     else:
@@ -825,12 +862,14 @@ def new_user_admin():
             user = db_sess.query(User).filter(
                 User.login == form.login.data).first()
             if not user:
+                db_sess.close()
                 return render_template('registerUserAdmin.html',
                                        title='Новый ученик',
                                        form=form,
                                        message="Такого ученика не существует!",
                                        us=us, nameUs=nameUs)
             if not (user.classId == 0 or user.classId == -1):
+                db_sess.close()
                 return render_template('registerUserAdmin.html',
                                        title='Новый ученик',
                                        form=form,
@@ -839,7 +878,9 @@ def new_user_admin():
             user.adminId = int(coc.split(';')[0])
             user.classId = classsId
             db_sess.commit()
+            db_sess.close()
             return redirect(f'/classes/{classsId}')
+        db_sess.close()
         return render_template('registerUserAdmin.html', title='Новый ученик',
                                form=form, us=us, nameUs=nameUs)
     else:
@@ -874,7 +915,9 @@ def new_teacher_admin():
                                        us=us, nameUs=nameUs)
             teacher.adminId = int(coc.split(';')[0])
             db_sess.commit()
+            db_sess.close()
             return redirect('/allTeachersAdmin')
+        db_sess.close()
         return render_template('registerTeacherAdmin.html',
                                title='Новый учитель', form=form, us=us,
                                nameUs=nameUs)
@@ -900,7 +943,9 @@ def new_class():
             )
             db_sess.add(classs)
             db_sess.commit()
+            db_sess.close()
             return redirect('/admin')
+        db_sess.close()
         return render_template('registerClass.html', title='Новый класс',
                                form=form, us=us, nameUs=nameUs)
     else:
@@ -937,6 +982,7 @@ def edit_teacher(id):
                 teacher.email = form.email.data
                 teacher.set_password(form.password.data)
                 db_sess.commit()
+                db_sess.close()
                 return redirect('/allTeachers')
             else:
                 abort(404)
@@ -977,9 +1023,11 @@ def edit_user(id):
                 user.email = form.email.data
                 user.set_password(form.password.data)
                 db_sess.commit()
+                db_sess.close()
                 return redirect(f'/developer')
             else:
                 abort(404)
+        db_sess.close()
         return render_template('register.html',
                                title='Редактирование ученика',
                                form=form, us=us, nameUs=nameUs)
@@ -1019,9 +1067,11 @@ def edit_admin(id):
                 admin.school = form.school.data
                 admin.set_password(form.password.data)
                 db_sess.commit()
+                db_sess.close()
                 return redirect(f'/allUsers')
             else:
                 abort(404)
+        db_sess.close()
         return render_template('registerAdmin.html',
                                title='Редактирование директора',
                                form=form, us=us, nameUs=nameUs)
@@ -1038,6 +1088,7 @@ def class_delete(id):
         db_sess.commit()
     else:
         abort(404)
+        db_sess.close()
     return redirect('/admin')
 
 
@@ -1060,12 +1111,14 @@ def new_teacherAdmin(id):
                 Classs.name == form.login.data).first()
             teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
             if not classs:
+                db_sess.close()
                 return render_template('registerTeacherClass.html',
                                        title='Подключение учителя',
                                        form=form,
                                        message="Такого класса в школе нет!",
                                        us=us, nameUs=nameUs)
             if classs.adminId != userUs.id:
+                db_sess.close()
                 return render_template('registerTeacherClass.html',
                                        title='Подключение учителя',
                                        form=form,
@@ -1074,6 +1127,7 @@ def new_teacherAdmin(id):
             predmet = db_sess.query(Predmet).filter(
                 Predmet.id == form.predmet.data).first()
             if not predmet:
+                db_sess.close()
                 return render_template('registerTeacherClass.html',
                                        title='Подключение учителя',
                                        form=form,
@@ -1088,7 +1142,9 @@ def new_teacherAdmin(id):
             )
             db_sess.add(predmetAndTeacher)
             db_sess.commit()
+            db_sess.close()
             return redirect('/allTeachersAdmin')
+        db_sess.close()
         return render_template('registerTeacherClass.html',
                                title='Подключение учителя', form=form, us=us,
                                nameUs=nameUs)
@@ -1104,6 +1160,7 @@ def teacher_delete(id):
         db_sess.commit()
     else:
         abort(404)
+        db_sess.close()
     return redirect('/allTeachers')
 
 
@@ -1118,8 +1175,10 @@ def user_deleteAdmin(id):
             user.adminId = -1
             user.classId = -1
             db_sess.commit()
+            db_sess.close()
         else:
             abort(404)
+            db_sess.close()
         return redirect(f'/classes/{classsId}')
     return redirect('/')
 
@@ -1131,8 +1190,10 @@ def teacher_deleteAdmin(id):
     if teacher:
         teacher.adminId = -1
         db_sess.commit()
+        db_sess.close()
     else:
         abort(404)
+        db_sess.close()
     return redirect('/allTeachersAdmin')
 
 
@@ -1153,6 +1214,7 @@ def sample_file_upload():
                 tem = Tems(name=name, text=text)
                 db_sess.add(tem)
                 db_sess.commit()
+                db_sess.close()
             except Exception as e:
                 print(
                     f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}")
@@ -1169,6 +1231,7 @@ def all_tems():
         a = []
         for i in db_sess.query(Tems):
             a.append([i.name, i.text.split('\\n'), i.id])
+        db_sess.close()
         return render_template(f'allTems.html', us="developer", news=a, bg='img')
     return redirect('/')
 
@@ -1180,8 +1243,10 @@ def tem_delete(id):
     if tem:
         db_sess.delete(tem)
         db_sess.commit()
+        db_sess.close()
     else:
         abort(404)
+        db_sess.close()
     return redirect(f'/allTems')
 
 
@@ -1192,8 +1257,10 @@ def user_delete(id):
     if user:
         db_sess.delete(user)
         db_sess.commit()
+        db_sess.close()
     else:
         abort(404)
+        db_sess.close()
     return redirect(f'/allUsers')
 
 
@@ -1204,8 +1271,10 @@ def admin_delete(id):
     if admin:
         db_sess.delete(admin)
         db_sess.commit()
+        db_sess.close()
     else:
         abort(404)
+        db_sess.close()
     return redirect('/developer')
 
 
