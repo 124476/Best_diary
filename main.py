@@ -112,9 +112,9 @@ def allUsers():
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         db_sess = db_session.create_session()
         a = []
         for i in db_sess.query(User):
@@ -174,8 +174,9 @@ def homeWork(predmetName):
         userId = int(coc.split(';')[0])
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(User).filter(
+            User.id == int(coc.split(';')[0])).first()
+        print(userUs)
         nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         db_sess = db_session.create_session()
         a = []
@@ -229,9 +230,9 @@ def allTeachers():
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         db_sess = db_session.create_session()
         a = []
         for i in db_sess.query(Teacher):
@@ -271,9 +272,9 @@ def developer():
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         a = []
         for i in db_sess.query(Admin).all():
             a.append([i.id, i.surname, i.name, i.school])
@@ -290,8 +291,8 @@ def teacher():
     coc = request.cookies.get("coc", 0)
     if coc:
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
+        userUs = db_sess.query(Teacher).filter(
+            Teacher.id == int(coc.split(';')[0])).first()
         nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         a = []
         for i in db_sess.query(PredmetAndTeacher).filter(
@@ -316,6 +317,7 @@ def user():
         db_sess = db_session.create_session()
         userUs = db_sess.query(User).filter(
             User.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         us = coc.split(';')[1]
         headings = ["Предмет", "Средний балл"]
         a = []
@@ -361,7 +363,7 @@ def user():
 
         db_sess.close()
         return render_template("user.html", headings=headings, data=a, us=us,
-                               bg='img')
+                               bg='img', nameUs=nameUs)
     else:
         return redirect("/")
 
@@ -404,6 +406,7 @@ def teacher_class(id, pred):
         db_sess = db_session.create_session()
         userUs = db_sess.query(Teacher).filter(
             Teacher.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         a = []
         for i in db_sess.query(User).filter(User.classId == id):
             evalutions = db_sess.query(Evaluation).filter(
@@ -450,7 +453,7 @@ def teacher_class(id, pred):
 
         db_sess.close()
         return render_template("teacher_class.html", headings=headings, data=a,
-                               us=us, pred=pred, clas=id, textDz=textDz.split('\n'))
+                               us=us, pred=pred, clas=id, textDz=textDz.split('\n'), nameUs=nameUs)
     else:
         return redirect("/")
 
@@ -718,9 +721,9 @@ def register():
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             if db_sess.query(User).filter(
@@ -761,9 +764,9 @@ def new_admin():
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             if db_sess.query(User).filter(
@@ -805,9 +808,9 @@ def new_teacher():
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         form = RegisterFormTeacher()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -955,9 +958,9 @@ def edit_teacher(id):
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         form = RegisterFormTeacher()
         if request.method == "GET":
             db_sess = db_session.create_session()
@@ -996,9 +999,9 @@ def edit_user(id):
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         form = RegisterForm()
         if request.method == "GET":
             db_sess = db_session.create_session()
@@ -1038,9 +1041,9 @@ def edit_admin(id):
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         form = RegisterFormAdmin()
         if request.method == "GET":
             db_sess = db_session.create_session()
@@ -1225,11 +1228,14 @@ def all_tems():
     coc = request.cookies.get("coc", 0)
     if coc and coc.split(';')[1] == 'developer':
         db_sess = db_session.create_session()
+        userUs = db_sess.query(Developer).filter(
+            Developer.id == int(coc.split(';')[0])).first()
+        nameUs = f'Пользователь {userUs.login}'
         a = []
         for i in db_sess.query(Tems):
             a.append([i.name, i.text.split('\\n'), i.id])
         db_sess.close()
-        return render_template(f'allTems.html', us="developer", news=a, bg='img')
+        return render_template(f'allTems.html', us="developer", news=a, bg='img', nameUs=nameUs)
     return redirect('/')
 
 
