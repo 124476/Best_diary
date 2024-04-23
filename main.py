@@ -133,12 +133,9 @@ def registerHomeWork(pred, clas):
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
-        db_sess = db_session.create_session()
         userUs = db_sess.query(Teacher).filter(
             Teacher.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         form = RegisterFormHomeWork()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -464,12 +461,9 @@ def new_evaluation(id, pred):
     if coc:
         us = coc.split(';')[1]
         db_sess = db_session.create_session()
-        userUs = db_sess.query(Admin).filter(
-            Admin.id == int(coc.split(';')[0])).first()
-        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
-        db_sess = db_session.create_session()
         userUs = db_sess.query(Teacher).filter(
             Teacher.id == int(coc.split(';')[0])).first()
+        nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
         form = RegisterFormEvaluation()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
@@ -1101,14 +1095,13 @@ def new_teacherAdmin(id):
         userUs = db_sess.query(Admin).filter(
             Admin.id == int(coc.split(';')[0])).first()
         nameUs = f'Здравствуйте {userUs.name} {userUs.surname}'
-        db_sess = db_session.create_session()
-        userUs = db_sess.query(Teacher).filter(
-            Teacher.id == int(coc.split(';')[0])).first()
         form = RegisterFormTeacherClass()
         if form.validate_on_submit():
             db_sess = db_session.create_session()
+            print(userUs.id)
             classs = db_sess.query(Classs).filter(
-                Classs.name == form.login.data).first()
+                Classs.name == form.login.data).filter(
+                Classs.adminId == userUs.id).first()
             teacher = db_sess.query(Teacher).filter(Teacher.id == id).first()
             if not classs:
                 db_sess.close()
@@ -1116,13 +1109,6 @@ def new_teacherAdmin(id):
                                        title='Подключение учителя',
                                        form=form,
                                        message="Такого класса в школе нет!",
-                                       us=us, nameUs=nameUs)
-            if classs.adminId != userUs.id:
-                db_sess.close()
-                return render_template('registerTeacherClass.html',
-                                       title='Подключение учителя',
-                                       form=form,
-                                       message="Такого класса нет в школе!",
                                        us=us, nameUs=nameUs)
             predmet = db_sess.query(Predmet).filter(
                 Predmet.id == form.predmet.data).first()
