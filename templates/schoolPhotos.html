@@ -1,0 +1,19 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Главное меню</title>
+    <link rel="shortcut icon" href="../static/images/diary.png" />
+</head>
+<body>
+{% extends "base.html" %}
+
+{% block content %}
+
+<a href="/editPhotoBtnLeft/{{numSchool}}" class="btn btn-warning" style="{{styleLeft}}"><</a>
+<a href="/editPhotoBtnRight/{{numSchool}}" class="btn btn-warning" style="{{styleRight}}">></a>
+<a href="/editPhotoBtnUp/{{numSchool}}/{{newNM}}" class="btn btn-warning" style="{{styleUp}}">↑</a>
+<img src="{{ img }}">
+
+{% endblock %}
+</body>
+</html>

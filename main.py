@@ -46,7 +46,7 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-db_sess = db_session.global_init('db/Dbase.db')
+db_session.global_init('db/Dbase.db')
 
 # для списка объектов
 api.add_resource(users_resource.UsersListResource, '/api/v2/users')
@@ -106,6 +106,81 @@ def admin():
         return redirect("/")
 
 
+@app.route("/schools")
+def schools():
+    return render_template("schools.html", bg='img')
+
+
+@app.route("/editPhotoBtnLeft/<int:id>")
+def editPhotoBtnLeft(id):
+    lin = request.cookies.get("schoolPhoto", 0).split("&&")
+    n = int(lin[0])
+    m = int(lin[1])
+
+    m -= 1
+    if m == 0:
+        m = 4
+
+    res = make_response(redirect(f"/schoolPhotos/{id}"))
+    res.set_cookie('schoolPhoto', f"{n}&&{m}", max_age=60 * 60 * 24 * 7)
+    return res
+
+
+@app.route("/editPhotoBtnRight/<int:id>")
+def editPhotoBtnRight(id):
+    lin = request.cookies.get("schoolPhoto", 0).split("&&")
+    n = int(lin[0])
+    m = int(lin[1])
+
+    m += 1
+    if m == 5:
+        m = 1
+
+    res = make_response(redirect(f"/schoolPhotos/{id}"))
+    res.set_cookie('schoolPhoto', f"{n}&&{m}", max_age=60 * 60 * 24 * 7)
+    return res
+
+
+@app.route("/editPhotoBtnUp/<int:id>/<string:newNM>")
+def editPhotoBtnUp(id, newNM):
+    res = make_response(redirect(f"/schoolPhotos/{id}"))
+    res.set_cookie('schoolPhoto', newNM, max_age=60 * 60 * 24 * 7)
+    return res
+
+
+@app.route("/schoolPhotos/<int:id>")
+def schoolPhotos(id):
+    try:
+        lin = request.cookies.get("schoolPhoto", 0).split("&&")
+        n = int(lin[0])
+        m = int(lin[1])
+    except:
+        n = 1
+        m = 1
+
+    styleLeft = ""
+    styleRight = ""
+    styleUp = "display:none"
+    newNM = ""
+
+    img = "/static/images/SchoolsPhotos"
+    if id == 1:
+        img += "/LiceeLobachevki" + f"/{n}{m}.jpg"
+
+        if n == 1 and m == 3:
+            styleUp = ""
+            newNM = "2&&3"
+        elif n == 2 and m == 1:
+            styleUp = ""
+            newNM = "1&&1"
+
+    elif id == 2:
+        pass
+
+    return render_template("schoolPhotos.html", bg="img", img=img, numSchool=id,
+                           styleLeft=styleLeft, styleRight=styleRight, styleUp=styleUp, newNM=newNM)
+
+
 @app.route("/allUsers")
 def allUsers():
     coc = request.cookies.get("coc", 0)
@@ -115,7 +190,6 @@ def allUsers():
         userUs = db_sess.query(Developer).filter(
             Developer.id == int(coc.split(';')[0])).first()
         nameUs = f'Пользователь {userUs.login}'
-        db_sess = db_session.create_session()
         a = []
         for i in db_sess.query(User):
             a.append([i.id, i.surname, i.name])
